@@ -1,0 +1,14 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Code editor configurations
+.vscode/
+.idea/
+
+# Local environment variables
+.env
+.env.local
+
+# Log files
+*.log
