@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 100-Million Pixel Grid</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: monospace;
+            color: white;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+        canvas {
+            display: block;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="info">
+        <h2>The 10,000 x 10,000 Grid</h2>
+        <p>Drag to Pan | Scroll Wheel to Zoom</p>
+        <p>X: <span id="coordX">0</span> | Y: <span id="coordY">0</span> | Zoom: <span id="zoomVal">100%</span></p>
+    </div>
+
+    <footer>
+        Built with AI assistance. Released into the public domain under the Unlicense.
+    </footer>
+
+    <canvas id="gridCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gridCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 10,000 x 10,000 = 100,000,000 pixels
+        const GRID_WIDTH = 10000;
+        const GRID_HEIGHT = 10000;
+
+        // Start camera at the center
+        let cameraX = GRID_WIDTH / 2;
+        let cameraY = GRID_HEIGHT / 2;
+        let zoom = 1; 
+        let isDragging = false;
+        let startX, startY;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            draw();
+        }
+
+        // Demo sold blocks
+        const soldBlocks = [
+            { x: 4950, y: 4950, w: 100, h: 100, color: '#ff0055' },
+            { x: 5100, y: 4900, w: 120, h: 60, color: '#00ffcc' }
+        ];
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            document.getElementById('coordX').innerText = Math.round(cameraX);
+            document.getElementById('coordY').innerText = Math.round(cameraY);
+            document.getElementById('zoomVal').innerText = Math.round(zoom * 100) + '%';
+
+            // Draw bounding box
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = Math.max(1, 2 * zoom);
+            const rectX = centerX + (0 - cameraX) * zoom;
+            const rectY = centerY + (0 - cameraY) * zoom;
+            ctx.strokeRect(rectX, rectY, GRID_WIDTH * zoom, GRID_HEIGHT * zoom);
+
+            // Render sold blocks
+            soldBlocks.forEach(block => {
+                const screenX = centerX + (block.x - cameraX) * zoom;
+                const screenY = centerY + (block.y - cameraY) * zoom;
+                const screenW = block.w * zoom;
+                const screenH = block.h * zoom;
+                
+                if (screenX + screenW > 0 && screenX < canvas.width &&
+                    screenY + screenH > 0 && screenY < canvas.height) {
+                    ctx.fillStyle = block.color;
+                    ctx.fillRect(screenX, screenY, screenW, screenH);
+                }
+            });
+        }
+
+        // Zooming logic (Mouse wheel)
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoom = Math.min(20, zoom * 1.1); // Max zoom 20x
+            } else {
+                zoom = Math.max(0.05, zoom / 1.1); // Min zoom 5%
+            }
+            draw();
+        }, { passive: false });
+
+        // Dragging logic
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            // Adjust pan speed based on zoom level
+            cameraX -= dx / zoom;
+            cameraY -= dy / zoom;
+
+            cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
+            cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
+
+            startX = e.clientX;
+            startY = e.clientY;
+            draw();
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('resize', resize);
+
+        resize();
+    </script>
+</body>
+</html>
