@@ -3,40 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The 400-Million Pixel S-Curve Grid</title>
+    <title>Neon-Grid Matrix // Vaporwave Horizon</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #111;
-            font-family: monospace;
-            color: white;
+            background-color: #0d0115; /* Deep Cyber Midnight */
+            font-family: 'Courier New', Courier, monospace;
+            color: #ff007f; /* Hot Neon Magenta */
             user-select: none;
         }
+        
         #info, #editor-panel, #controls-panel {
             position: absolute;
-            background: rgba(0,0,0,0.91);
+            background: rgba(19, 3, 36, 0.92); /* Translucent Synth Dark */
             padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            border: 2px solid #00f0ff; /* Electric Cyan Neon Border */
+            box-shadow: 0 0 15px #00f0ff, inset 0 0 10px rgba(0, 240, 255, 0.3);
+            text-shadow: 0 0 5px #ff007f;
         }
+        
         #info {
             top: 10px;
             left: 10px;
             pointer-events: none;
         }
+        
         #controls-panel {
-            bottom: 60px;
+            bottom: 65px;
             left: 10px;
             width: 180px;
         }
+        
         #editor-panel {
             top: 10px;
             right: 10px;
             display: none;
-            width: 250px;
+            width: 260px;
+            color: #00f0ff; /* Light up editor texts in Cyan */
+            text-shadow: 0 0 5px #00f0ff;
+            border-color: #ff007f; /* Magenta border for action matrix */
+            box-shadow: 0 0 15px #ff007f;
         }
+        
+        h2, h3 {
+            margin-top: 0;
+            color: #fff;
+            text-shadow: 0 0 8px #ff007f, 0 0 20px #ff007f;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
         canvas {
             display: block;
             cursor: grab;
@@ -44,96 +62,124 @@
         canvas:active {
             cursor: grabbing;
         }
+        
         button {
-            background: #00ffcc;
-            color: black;
-            border: none;
+            background: #ff007f;
+            color: #fff;
+            border: 1px solid #fff;
             padding: 8px 12px;
+            font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
+            text-transform: uppercase;
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
             border-radius: 4px;
-            transition: background 0.2s;
+            box-shadow: 0 0 8px #ff007f;
+            transition: all 0.2s ease-in-out;
         }
-        button:hover { background: #00ccaa; }
+        button:hover { 
+            background: #00f0ff; 
+            color: #000;
+            box-shadow: 0 0 15px #00f0ff;
+            text-shadow: none;
+        }
+        
         footer {
             position: absolute;
             bottom: 5px;
             width: 100%;
             text-align: center;
             font-size: 11px;
-            color: #555;
+            color: #704780;
             pointer-events: none;
             line-height: 1.4;
+            text-shadow: 0 0 2px rgba(255, 0, 127, 0.4);
         }
+        
         .tool-btn {
             width: 45%; 
             margin: 0 2%; 
             display: inline-block;
         }
+        
         .rate-badge {
-            background: #222;
-            border: 1px solid #444;
-            padding: 5px;
+            background: #1a0229;
+            border: 1px solid #ff007f;
+            padding: 8px;
             border-radius: 4px;
-            margin-top: 5px;
+            margin-top: 8px;
             font-weight: bold;
-            color: #ffea00;
+            color: #fffb00;
+            text-shadow: 0 0 5px #fffb00;
+            text-align: center;
+            box-shadow: 0 0 8px rgba(255, 251, 0, 0.2);
+        }
+
+        input[type="url"] {
+            width: 90%; 
+            background: #11011a; 
+            border: 1px solid #00f0ff; 
+            color: #fff; 
+            padding: 5px; 
+            font-family: monospace; 
+            border-radius: 3px;
+            box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
         }
     </style>
 </head>
 <body>
 
     <div id="info">
-        <h2>The S-Curve Grid</h2>
-        <p>Drag to Pan | Scroll to Zoom</p>
-        <hr style="border-color:#333">
-        <p>Hover X: <span id="hoverX">0</span> | Y: <span id="hoverY">0</span></p>
-        <p>Total Sold: <span id="totalSold">0</span> / 400M</p>
+        <h2>Cyber Grid //</h2>
+        <p style="color:#fff;">PAN: DRAG MOUSE | ZOOM: SCROLL</p>
+        <hr style="border-color:#ff007f">
+        <p>VECTOR X: <span id="hoverX" style="color:#fff">0</span> | Y: <span id="hoverY" style="color:#fff">0</span></p>
+        <p>UNITS ALLOCATED: <span id="totalSold" style="color:#fff">0</span> / 400M</p>
         <div class="rate-badge">
-            Current Rate:<br>
-            1 Pixel = $<span id="curPrice">0.01</span>
+            SYS EXCH RATE:<br>
+            1 PIXEL = $<span id="curPrice">0.01</span>
         </div>
     </div>
 
     <div id="controls-panel">
-        <h3 style="margin:0 0 10px 0; font-size:14px;">Navigation</h3>
-        <button onclick="recenterCamera()" style="margin:0; background:#555; color:white;">Recenter View</button>
+        <h3 style="margin:0 0 10px 0; font-size:13px; color:#00f0ff; text-shadow:0 0 4px #00f0ff;">SYS UTILS</h3>
+        <button onclick="recenterCamera()" style="margin:0; background:#2c053d; color:#00f0ff; border-color:#00f0ff; box-shadow:0 0 5px #00f0ff;">Recenter View</button>
     </div>
 
     <div id="editor-panel">
-        <h3 style="margin-top:0;">Design Ad Space</h3>
-        <p id="selectionDetails" style="font-size:12px; color:#aaa;">Loc: (0,0)</p>
+        <h3>AD MATRIX EDITOR</h3>
+        <p id="selectionDetails" style="font-size:11px; color:#fff; text-shadow: 0 0 3px #fff;">Loc: (0,0)</p>
         
-        <canvas id="pixelEditorCanvas" width="160" height="160" style="border:1px solid #555; display:block; margin:10px auto; background:#111;"></canvas>
+        <canvas id="pixelEditorCanvas" width="160" height="160" style="border:2px solid #00f0ff; display:block; margin:10px auto; background:#0d0115; box-shadow:0 0 8px #00f0ff;"></canvas>
         
         <div style="text-align:center; margin-bottom:10px;">
-            <label style="font-size:12px;">Palette Pick: </label>
-            <input type="color" id="paintColor" value="#00ffcc" style="vertical-align:middle; cursor:pointer;"><br><br>
-            <button id="toolDraw" class="tool-btn" style="background:#00ffcc;" onclick="setTool('draw')">Paint</button>
-            <button id="toolErase" class="tool-btn" style="background:#555; color:white;" onclick="setTool('erase')">Eraser</button>
+            <label style="font-size:11px; color:#ff007f; text-shadow:0 0 3px #ff007f;">HEX PALETTE: </label>
+            <input type="color" id="paintColor" value="#00f0ff" style="vertical-align:middle; cursor:pointer; background:none; border:none;"><br><br>
+            <button id="toolDraw" class="tool-btn" style="background:#00f0ff; color:#000; box-shadow:0 0 8px #00f0ff;" onclick="setTool('draw')">Paint</button>
+            <button id="toolErase" class="tool-btn" style="background:#333; color:#fff; box-shadow:none;" onclick="setTool('erase')">Eraser</button>
         </div>
 
         <div style="margin-bottom:10px;">
-            <label style="font-size:12px; display:block; margin-bottom:4px;">Target Redirect URL:</label>
-            <input type="url" id="adTargetUrl" placeholder="https://yourwebsite.com" style="width:90%; background:#222; border:1px solid #444; color:white; padding:4px; font-family:monospace; border-radius:3px;">
+            <label style="font-size:11px; display:block; margin-bottom:4px; color:#ff007f; text-shadow:0 0 3px #ff007f;">REDIRECT GATEWAY (URL):</label>
+            <input type="url" id="adTargetUrl" placeholder="https://retro-space.wave">
         </div>
 
-        <p style="font-size:13px; margin:5px 0;">Size Requirement: <strong>10x10 Block (100 Pixels)</strong></p>
-        <p style="font-size:13px;">Estimated Cost: <strong style="color:#00ffcc;">$<span id="blockCost">0.00</span></strong></p>
+        <p style="font-size:11px; margin:5px 0; color:#fff;">RESOLUTION: <strong>32x32 Matrix Mesh</strong></p>
+        <p style="font-size:11px; margin:5px 0; color:#fff;">BOUND MINIMUM: <strong>10x10 Block (100px)</strong></p>
+        <p style="font-size:12px; margin:10px 0 5px 0;">COST: <strong style="color:#fffb00; text-shadow:0 0 5px #fffb00;">$<span id="blockCost">0.00</span></strong></p>
         
-        <button onclick="generatePayload()">1. Generate Ad Design</button>
+        <button onclick="generatePayload()">1. Compile Matrix Data</button>
         
-        <textarea id="payloadBox" readonly placeholder="Your art code will appear here..." style="width:94%; height:50px; background:#222; color:#fff; border:1px solid #333; font-family:monospace; font-size:10px; margin-top:8px; display:none; resize:none; padding:5px; border-radius:4px;"></textarea>
+        <textarea id="payloadBox" readonly placeholder="DATA STREAM READY..." style="width:94%; height:50px; background:#11011a; color:#00f0ff; border:1px solid #ff007f; font-family:monospace; font-size:10px; margin-top:8px; display:none; resize:none; padding:5px; border-radius:4px; box-shadow:0 0 5px #ff007f;"></textarea>
         
-        <button id="buyBtn" style="display:none; background:#ffea00; color:black;" onclick="processPayment()">2. Purchase Space</button>
-        <button style="background:#ff0055; color:white; margin-top:5px;" onclick="cancelSelection()">Cancel</button>
+        <button id="buyBtn" style="display:none; background:#fffb00; color:#000; box-shadow:0 0 10px #fffb00;" onclick="processPayment()">2. Initialize Gateway Buy</button>
+        <button style="background:#555; color:#fff; box-shadow:none; margin-top:5px;" onclick="cancelSelection()">Abort</button>
     </div>
 
     <footer>
-        Built with AI assistance. Tested and operated by and for humans. Released under the Unlicense.<br>
-        <span style="color:#a51d24; font-weight:bold;">TERMS OF SERVICE: Any submission containing explicit content, malicious software redirects, or systemic platform abuse will result in an immediate site ban and permanent asset revocation without recourse or monetary refund.</span>
+        Vaporwave Grid Canvas Platform // Built with Automated Synthesizers. Operated by humans.<br>
+        <span style="color:#ff0055; font-weight:bold; text-shadow: 0 0 3px #ff0055;">MALICIOUS PACKETS, NSFW PAYLOADS, OR DATA CORRUPTION WILL PROMPT SECURITY ACTION: TOTAL NODE REVOCATION & MONEY FORFEITURE.</span>
     </footer>
 
     <canvas id="gridCanvas"></canvas>
@@ -162,39 +208,42 @@
             return Math.max(0.01, price); 
         }
 
-        // DATABASE AD STRUCTURE (Each block has individual design matrix and clickable hyperlinks)
         const soldBlocks = [
             { 
                 x: 9950, y: 9950, w: 10, h: 10, 
                 url: 'https://github.com',
-                grid: Array(10).fill().map(() => Array(10).fill('#ff0055')) // Flat backup color example matrix
+                grid: Array(10).fill().map(() => Array(10).fill('#ff007f')) 
             }
         ];
 
         let selection = null;
 
-        // UPDATED TO CRITICAL 10X10 REQUIREMENT MINIMUMS
+        // 32x32 PRODUCTION CONFIGURATION SYSTEM
         const editorCanvas = document.getElementById('pixelEditorCanvas');
         const eCtx = editorCanvas.getContext('2d');
-        const EDITOR_SIZE = 10; 
-        const PIXEL_SCALE = 16; // Scales up to fit canvas space geometry correctly (10 * 16 = 160)
+        const EDITOR_SIZE = 32; 
+        const PIXEL_SCALE = 5; // 32 * 5 = 160px dimensions
         
-        let editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#111111'));
+        let editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#130324'));
         let isPainting = false;
         let currentTool = 'draw'; 
 
         function setTool(tool) {
             currentTool = tool;
             if (tool === 'draw') {
-                document.getElementById('toolDraw').style.background = '#00ffcc';
+                document.getElementById('toolDraw').style.background = '#00f0ff';
                 document.getElementById('toolDraw').style.color = 'black';
-                document.getElementById('toolErase').style.background = '#555';
+                document.getElementById('toolDraw').style.boxShadow = '0 0 8px #00f0ff';
+                document.getElementById('toolErase').style.background = '#333';
                 document.getElementById('toolErase').style.color = 'white';
+                document.getElementById('toolErase').style.boxShadow = 'none';
             } else {
-                document.getElementById('toolErase').style.background = '#ff0055';
+                document.getElementById('toolErase').style.background = '#ff007f';
                 document.getElementById('toolErase').style.color = 'white';
-                document.getElementById('toolDraw').style.background = '#555';
+                document.getElementById('toolErase').style.boxShadow = '0 0 8px #ff007f';
+                document.getElementById('toolDraw').style.background = '#333';
                 document.getElementById('toolDraw').style.color = 'white';
+                document.getElementById('toolDraw').style.boxShadow = 'none';
             }
         }
 
@@ -207,7 +256,7 @@
                 }
             }
 
-            eCtx.strokeStyle = '#252525';
+            eCtx.strokeStyle = '#20053b';
             eCtx.lineWidth = 0.5;
             for (let i = 0; i <= EDITOR_SIZE; i++) {
                 eCtx.beginPath(); eCtx.moveTo(i * PIXEL_SCALE, 0); eCtx.lineTo(i * PIXEL_SCALE, editorCanvas.height); eCtx.stroke();
@@ -222,23 +271,29 @@
             
             if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
                 if (currentTool === 'draw') {
-                    const activeColor = document.getElementById('paintColor').value;
-                    
-                    // QUICK TOGGLE: If they click the exact same color again, erase it!
-                    if (editorGrid[clickY][clickX] === activeColor) {
-                        editorGrid[clickY][clickX] = '#111111';
-                    } else {
-                        editorGrid[clickY][clickX] = activeColor;
-                    }
+                    editorGrid[clickY][clickX] = document.getElementById('paintColor').value;
                 } else {
-                    // ERASER MODE: Force-clear back to empty space theme color
-                    editorGrid[clickY][clickX] = '#111111';
+                    editorGrid[clickY][clickX] = '#130324';
                 }
                 drawEditor();
             }
         }
 
-        editorCanvas.addEventListener('mousedown', (e) => { isPainting = true; paintPixel(e); });
+        editorCanvas.addEventListener('mousedown', (e) => { 
+            isPainting = true; 
+            const rect = editorCanvas.getBoundingClientRect();
+            const clickX = Math.floor((e.clientX - rect.left) / PIXEL_SCALE);
+            const clickY = Math.floor((e.clientY - rect.top) / PIXEL_SCALE);
+            
+            if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
+                if (editorGrid[clickY][clickX] !== '#130324' && currentTool === 'draw') {
+                    editorGrid[clickY][clickX] = '#130324';
+                    drawEditor();
+                    return; 
+                }
+            }
+            paintPixel(e); 
+        });
         editorCanvas.addEventListener('mousemove', (e) => { if (isPainting) paintPixel(e); });
         window.addEventListener('mouseup', () => { isPainting = false; });
 
@@ -259,49 +314,48 @@
             document.getElementById('curPrice').innerText = currentUnitPrice.toFixed(4);
             document.getElementById('totalSold').innerText = totalPixelsSold.toLocaleString();
 
-            // Map Bounds Outline
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = Math.max(1, 2 * zoom);
+            // Synthwave Grid Horizon Bounds Outline
+            ctx.strokeStyle = '#ff007f';
+            ctx.shadowBlur = zoom > 0.5 ? 8 : 0;
+            ctx.shadowColor = '#ff007f';
+            ctx.lineWidth = Math.max(1.5, 2 * zoom);
             const rectX = centerX + (0 - cameraX) * zoom;
             const rectY = centerY + (0 - cameraY) * zoom;
             ctx.strokeRect(rectX, rectY, GRID_WIDTH * zoom, GRID_HEIGHT * zoom);
+            ctx.shadowBlur = 0; // Reset canvas bloom for performance
 
-            // Detailed Render Engine for Sold Blocks (Renders full matrix designs)
+            // Render Engine for Custom Matrix Submissions
             soldBlocks.forEach(block => {
                 const startScreenX = centerX + (block.x - cameraX) * zoom;
                 const startScreenY = centerY + (block.y - cameraY) * zoom;
                 
-                // Render internal layout matrix architecture
                 if (block.grid) {
-                    const cellW = zoom; 
-                    const cellH = zoom;
                     for (let y = 0; y < block.h; y++) {
                         for (let x = 0; x < block.w; x++) {
                             ctx.fillStyle = block.grid[y][x];
-                            ctx.fillRect(startScreenX + (x * zoom), startScreenY + (y * zoom), cellW + 0.5, cellH + 0.5);
+                            ctx.fillRect(startScreenX + (x * zoom), startScreenY + (y * zoom), zoom + 0.5, zoom + 0.5);
                         }
                     }
                 } else {
-                    // Fail-safe flat boundary fill
-                    ctx.fillStyle = block.color || '#ff0055';
+                    ctx.fillStyle = block.color || '#ff007f';
                     ctx.fillRect(startScreenX, startScreenY, block.w * zoom, block.h * zoom);
                 }
             });
 
-            // Snapped Target Grid Box Overlay
+            // Target Overlay Bounding Unit Glow Box
             if (selection) {
                 const screenX = centerX + (selection.x - cameraX) * zoom;
                 const screenY = centerY + (selection.y - cameraY) * zoom;
-                ctx.strokeStyle = '#00ffcc';
+                ctx.strokeStyle = '#00f0ff';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(screenX, screenY, selection.w * zoom, selection.h * zoom);
             }
 
-            // Crosshair
-            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            // Central Targeting Reticle
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
             ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(centerX - 10, centerY); ctx.lineTo(centerX + 10, centerY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(centerX, centerY - 10); ctx.lineTo(centerX, centerY + 10); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(centerX - 12, centerY); ctx.lineTo(centerX + 12, centerY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(centerX, centerY - 12); ctx.lineTo(centerX, centerY + 12); ctx.stroke();
         }
 
         canvas.addEventListener('mousemove', (e) => {
@@ -324,7 +378,8 @@
                 draw();
             }
         });
-            canvas.addEventListener('mousedown', (e) => {
+
+        canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -332,7 +387,6 @@
 
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // Click Handler (Direct Selection Snaps AND Ad Redirect Actions)
         canvas.addEventListener('click', (e) => {
             if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) return; 
             
@@ -343,29 +397,29 @@
 
             if (clickGridX < 0 || clickGridX >= GRID_WIDTH || clickGridY < 0 || clickGridY >= GRID_HEIGHT) return;
 
-            // 1. Check if user clicked an active sold ad unit block
+            // Link Gateway processing checks
             for (let block of soldBlocks) {
                 if (clickGridX >= block.x && clickGridX < block.x + block.w &&
                     clickGridY >= block.y && clickGridY < block.y + block.h) {
                     if (block.url) {
-                        window.open(block.url, '_blank'); // Instant redirect target link open!
+                        window.open(block.url, '_blank');
                         return;
                     }
                 }
             }
 
-            // 2. Otherwise snap selection array to the nearest base multiple of 10
+            // Snaps coordinate maps securely down to multiples of 10
             const snappedX = Math.floor(clickGridX / 10) * 10;
             const snappedY = Math.floor(clickGridY / 10) * 10;
 
             selection = { x: snappedX, y: snappedY, w: 10, h: 10 };
-            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#111111'));
+            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#130324'));
             document.getElementById('adTargetUrl').value = '';
             
-            const totalPixels = selection.w * selection.h; // Exactly 100 pixels
+            const totalPixels = selection.w * selection.h; 
             const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
 
-            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | 100-Pixel Ad Unit`;
+            document.getElementById('selectionDetails').innerText = `NODE ADDR: (${selection.x}, ${selection.y}) // SEC SEC`;
             document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
             document.getElementById('editor-panel').style.display = 'block';
             
@@ -380,7 +434,7 @@
         function generatePayload() {
             const urlValue = document.getElementById('adTargetUrl').value.trim();
             if(!urlValue) {
-                alert("Please enter a valid target URL layout link for your advertisement redirect asset location.");
+                alert("CRITICAL ERROR: A valid redirect gateway link string layout is required.");
                 return;
             }
 
@@ -400,7 +454,7 @@
             pBox.select(); 
             
             document.getElementById('buyBtn').style.display = 'block';
-            alert("Design code generated! Copy the text block below before proceeding.");
+            alert("MATRIX COMPILED: Asset configuration payload generated below.");
         }
 
         function cancelSelection() {
@@ -410,12 +464,12 @@
         }
 
         function processPayment() {
-            alert("To complete purchase: Head to checkout, process your amount, and paste your generated text string configuration explicitly inside your transaction confirmation comment notes.");
+            alert("TRANSACTION GATEWAY OPEN: Process checkout amount and pass compiled configuration data array strings through processing transaction notes.");
         }
 
-        // FIXED: Global Window Zoom Engine that safely ignores UI panels
+        // Global Zoom Tracker Setup
         window.addEventListener('wheel', (e) => {
-            if (e.target !== canvas) return; // Keeps zoom from firing while drawing or typing URLs
+            if (e.target !== canvas) return;
             
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
