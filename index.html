@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The 100-Million Pixel Grid</title>
+    <title>The 100-Million Pixel S-Curve Grid</title>
     <style>
         body {
             margin: 0;
@@ -12,14 +12,23 @@
             font-family: monospace;
             color: white;
         }
-        #info {
+        #info, #editor-panel {
             position: absolute;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        #info {
             top: 10px;
             left: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 5px;
             pointer-events: none;
+        }
+        #editor-panel {
+            top: 10px;
+            right: 10px;
+            display: none;
+            width: 220px;
         }
         canvas {
             display: block;
@@ -28,6 +37,18 @@
         canvas:active {
             cursor: grabbing;
         }
+        button {
+            background: #00ffcc;
+            color: black;
+            border: none;
+            padding: 8px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        button:hover { background: #00ccaa; }
         footer {
             position: absolute;
             bottom: 10px;
@@ -42,13 +63,26 @@
 <body>
 
     <div id="info">
-        <h2>The 10,000 x 10,000 Grid</h2>
-        <p>Drag to Pan | Scroll Wheel to Zoom</p>
-        <p>X: <span id="coordX">0</span> | Y: <span id="coordY">0</span> | Zoom: <span id="zoomVal">100%</span></p>
+        <h2>The S-Curve Grid</h2>
+        <p>Drag to Pan | Scroll to Zoom</p>
+        <hr style="border-color:#333">
+        <p>Hover X: <span id="hoverX">0</span> | Y: <span id="hoverY">0</span></p>
+        <p>Current Pixel Price: $<span id="curPrice">0.01</span></p>
+        <p>Total Sold: <span id="totalSold">0</span> / 100M</p>
+    </div>
+
+    <div id="editor-panel">
+        <h3>Buy This Space</h3>
+        <p>Selected Block:</p>
+        <p id="selectionDetails">Size: 0x0</p>
+        <p>Estimated Cost: <strong>$<span id="blockCost">0.00</span></strong></p>
+        <p style="font-size:10px; color:#aaa;">Draw tool / design data will compile here.</p>
+        <button onclick="processPayment()">Purchase Space</button>
+        <button style="background:#ff0055; color:white;" onclick="cancelSelection()">Cancel</button>
     </div>
 
     <footer>
-        Built with AI assistance. Released into the public domain under the Unlicense.
+        Built with AI assistance. Released under the Unlicense.
     </footer>
 
     <canvas id="gridCanvas"></canvas>
@@ -57,16 +91,36 @@
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d');
         
-        // 10,000 x 10,000 = 100,000,000 pixels
         const GRID_WIDTH = 10000;
         const GRID_HEIGHT = 10000;
 
-        // Start camera at the center
         let cameraX = GRID_WIDTH / 2;
         let cameraY = GRID_HEIGHT / 2;
         let zoom = 1; 
         let isDragging = false;
         let startX, startY;
+
+        // TRACKING SIMULATED SALES FOR S-CURVE
+        let totalPixelsSold = 25000000; // Say 25 million pixels are sold globally right now
+
+        // S-CURVE LOGISTIC MATH CONFIGURATION
+        const MAX_PRICE = 10.00;     // L: Cap at $10 per pixel
+        const STEEPNESS = 0.0000001; // k: Controls speed of acceleration curve
+        const MIDPOINT = 50000000;   // x0: High growth happens around 50M pixels sold
+
+        function getPixelPrice(N) {
+            // Standard Logistic Equation: L / (1 + e^(-k * (N - x0)))
+            const price = MAX_PRICE / (1 + Math.exp(-STEEPNESS * (N - MIDPOINT)));
+            return Math.max(0.01, price); // Never let price hit absolute zero
+        }
+
+        // Existing data structures
+        const soldBlocks = [
+            { x: 4950, y: 4950, w: 100, h: 100, color: '#ff0055' },
+            { x: 5100, y: 4900, w: 120, h: 60, color: '#00ffcc' }
+        ];
+
+        let selection = null;
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -74,23 +128,17 @@
             draw();
         }
 
-        // Demo sold blocks
-        const soldBlocks = [
-            { x: 4950, y: 4950, w: 100, h: 100, color: '#ff0055' },
-            { x: 5100, y: 4900, w: 120, h: 60, color: '#00ffcc' }
-        ];
-
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
 
-            document.getElementById('coordX').innerText = Math.round(cameraX);
-            document.getElementById('coordY').innerText = Math.round(cameraY);
-            document.getElementById('zoomVal').innerText = Math.round(zoom * 100) + '%';
+            // Live metrics update
+            const currentUnitPrice = getPixelPrice(totalPixelsSold);
+            document.getElementById('curPrice').innerText = currentUnitPrice.toFixed(4);
+            document.getElementById('totalSold').innerText = totalPixelsSold.toLocaleString();
 
-            // Draw bounding box
+            // Draw master boundary lines
             ctx.strokeStyle = '#333';
             ctx.lineWidth = Math.max(1, 2 * zoom);
             const rectX = centerX + (0 - cameraX) * zoom;
@@ -101,55 +149,90 @@
             soldBlocks.forEach(block => {
                 const screenX = centerX + (block.x - cameraX) * zoom;
                 const screenY = centerY + (block.y - cameraY) * zoom;
-                const screenW = block.w * zoom;
-                const screenH = block.h * zoom;
-                
-                if (screenX + screenW > 0 && screenX < canvas.width &&
-                    screenY + screenH > 0 && screenY < canvas.height) {
-                    ctx.fillStyle = block.color;
-                    ctx.fillRect(screenX, screenY, screenW, screenH);
-                }
+                ctx.fillStyle = block.color;
+                ctx.fillRect(screenX, screenY, block.w * zoom, block.h * zoom);
             });
+
+            // Render current drawing selection box placeholder
+            if (selection) {
+                const screenX = centerX + (selection.x - cameraX) * zoom;
+                const screenY = centerY + (selection.y - cameraY) * zoom;
+                ctx.strokeStyle = '#00ffcc';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(screenX, screenY, selection.w * zoom, selection.h * zoom);
+            }
         }
 
-        // Zooming logic (Mouse wheel)
-        window.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                zoom = Math.min(20, zoom * 1.1); // Max zoom 20x
-            } else {
-                zoom = Math.max(0.05, zoom / 1.1); // Min zoom 5%
-            }
-            draw();
-        }, { passive: false });
+        // Screen coordinate translation to grid tracking
+        canvas.addEventListener('mousemove', (e) => {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            const gridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
+            const gridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
 
-        // Dragging logic
+            if(gridX >= 0 && gridX <= GRID_WIDTH && gridY >= 0 && gridY <= GRID_HEIGHT) {
+                document.getElementById('hoverX').innerText = gridX;
+                document.getElementById('hoverY').innerText = gridY;
+            }
+
+            if (isDragging) {
+                cameraX -= (e.clientX - startX) / zoom;
+                cameraY -= (e.clientY - startY) / zoom;
+                cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
+                cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
+                startX = e.clientX;
+                startY = e.clientY;
+                draw();
+            }
+        });
+
         canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
         });
 
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // Click to mock select an layout area
+        canvas.addEventListener('click', (e) => {
+            if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) return; // It was a drag action
             
-            // Adjust pan speed based on zoom level
-            cameraX -= dx / zoom;
-            cameraY -= dy / zoom;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const clickGridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
+            const clickGridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
 
-            cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
-            cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
+            // Mock a fresh 30x30 block purchase selection on click
+            selection = { x: clickGridX - 15, y: clickGridY - 15, w: 30, h: 30 };
+            
+            const totalPixels = selection.w * selection.h;
+            const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
 
-            startX = e.clientX;
-            startY = e.clientY;
+            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | Area: ${selection.w}x${selection.h}`;
+            document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
+            document.getElementById('editor-panel').style.display = 'block';
             draw();
         });
 
-        window.addEventListener('mouseup', () => isDragging = false);
-        window.addEventListener('resize', resize);
+        function cancelSelection() {
+            selection = null;
+            document.getElementById('editor-panel').style.display = 'none';
+            draw();
+        }
 
+        function processPayment() {
+            alert("To buy space: Head to my Ko-fi/Stripe link and include your coordinate data tag payload in the reference details note field!");
+        }
+
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            zoom = e.deltaY < 0 ? Math.min(20, zoom * 1.1) : Math.max(0.05, zoom / 1.1);
+            draw();
+        }, { passive: false });
+
+        window.addEventListener('resize', resize);
         resize();
     </script>
 </body>
