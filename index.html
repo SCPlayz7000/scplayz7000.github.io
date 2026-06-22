@@ -288,31 +288,38 @@
             alert("To buy space: Head to my Ko-fi/Stripe link and include your coordinate data tag payload in the reference details note field!");
         }
 
-        // Premium Mouse-Centered Map Zooming Logic
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-
+        // Click grid to lock selection area and show drawing matrix tools
+        canvas.addEventListener('click', (e) => {
+            if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) return; 
+            
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const gridMouseX = cameraX + (mouseX - centerX) / zoom;
-            const gridMouseY = cameraY + (mouseY - centerY) / zoom;
+            const clickGridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
+            const clickGridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
 
-            if (e.deltaY < 0) {
-                zoom = Math.min(20, zoom * 1.1); 
-            } else {
-                zoom = Math.max(0.05, zoom / 1.1); 
-            }
+            // Out of bounds safety check
+            if (clickGridX < 0 || clickGridX >= GRID_WIDTH || clickGridY < 0 || clickGridY >= GRID_HEIGHT) return;
 
-            cameraX = gridMouseX - (mouseX - centerX) / zoom;
-            cameraY = gridMouseY - (mouseY - centerY) / zoom;
-            cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
-            cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
+            // NEW SNAPPING LOGIC: Snap the upper-left corner to the nearest multiple of 16
+            const snappedX = Math.floor(clickGridX / 16) * 16;
+            const snappedY = Math.floor(clickGridY / 16) * 16;
 
+            selection = { x: snappedX, y: snappedY, w: 16, h: 16 };
+            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#00ffcc'));
+            
+            const totalPixels = selection.w * selection.h;
+            const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
+
+            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | 16x16 Block`;
+            document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
+            document.getElementById('editor-panel').style.display = 'block';
+            
+            document.getElementById('payloadBox').style.display = 'none';
+            document.getElementById('buyBtn').style.display = 'none';
+            
+            drawEditor();
             draw();
-        }, { passive: false });
+        });
 
         window.addEventListener('resize', resize);
         resize();
