@@ -312,8 +312,7 @@
                 draw();
             }
         });
-
-        canvas.addEventListener('mousedown', (e) => {
+            canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             startX = e.clientX;
             startY = e.clientY;
@@ -402,8 +401,10 @@
             alert("To complete purchase: Head to checkout, process your amount, and paste your generated text string configuration explicitly inside your transaction confirmation comment notes.");
         }
 
-        // Map Zooming Engine Mechanics
-        canvas.addEventListener('wheel', (e) => {
+        // FIXED: Global Window Zoom Engine that safely ignores UI panels
+        window.addEventListener('wheel', (e) => {
+            if (e.target !== canvas) return; // Keeps zoom from firing while drawing or typing URLs
+            
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
