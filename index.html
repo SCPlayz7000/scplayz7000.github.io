@@ -11,24 +11,31 @@
             background-color: #111;
             font-family: monospace;
             color: white;
+            user-select: none;
         }
-        #info, #editor-panel {
+        #info, #editor-panel, #controls-panel {
             position: absolute;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.91);
             padding: 15px;
             border-radius: 6px;
             border: 1px solid #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         #info {
             top: 10px;
             left: 10px;
             pointer-events: none;
         }
+        #controls-panel {
+            bottom: 60px;
+            left: 10px;
+            width: 180px;
+        }
         #editor-panel {
             top: 10px;
             right: 10px;
             display: none;
-            width: 240px;
+            width: 250px;
         }
         canvas {
             display: block;
@@ -47,16 +54,32 @@
             width: 100%;
             margin-top: 10px;
             border-radius: 4px;
+            transition: background 0.2s;
         }
         button:hover { background: #00ccaa; }
         footer {
             position: absolute;
-            bottom: 10px;
+            bottom: 5px;
             width: 100%;
             text-align: center;
-            font-size: 12px;
-            color: #666;
+            font-size: 11px;
+            color: #555;
             pointer-events: none;
+            line-height: 1.4;
+        }
+        .tool-btn {
+            width: 45%; 
+            margin: 0 2%; 
+            display: inline-block;
+        }
+        .rate-badge {
+            background: #222;
+            border: 1px solid #444;
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #ffea00;
         }
     </style>
 </head>
@@ -67,33 +90,50 @@
         <p>Drag to Pan | Scroll to Zoom</p>
         <hr style="border-color:#333">
         <p>Hover X: <span id="hoverX">0</span> | Y: <span id="hoverY">0</span></p>
-        <p>Current Pixel Price: $<span id="curPrice">0.01</span></p>
         <p>Total Sold: <span id="totalSold">0</span> / 400M</p>
+        <div class="rate-badge">
+            Current Rate:<br>
+            1 Pixel = $<span id="curPrice">0.01</span>
+        </div>
+    </div>
+
+    <div id="controls-panel">
+        <h3 style="margin:0 0 10px 0; font-size:14px;">Navigation</h3>
+        <button onclick="recenterCamera()" style="margin:0; background:#555; color:white;">Recenter View</button>
     </div>
 
     <div id="editor-panel">
-        <h3>Design Your Space</h3>
-        <p id="selectionDetails">Loc: (0,0)</p>
+        <h3 style="margin-top:0;">Design Ad Space</h3>
+        <p id="selectionDetails" style="font-size:12px; color:#aaa;">Loc: (0,0)</p>
         
-        <canvas id="pixelEditorCanvas" width="160" height="160" style="border:1px solid #555; display:block; margin:10px auto; background:#222;"></canvas>
+        <canvas id="pixelEditorCanvas" width="160" height="160" style="border:1px solid #555; display:block; margin:10px auto; background:#111;"></canvas>
         
         <div style="text-align:center; margin-bottom:10px;">
-            <label>Paint Color: </label>
-            <input type="color" id="paintColor" value="#00ffcc">
+            <label style="font-size:12px;">Palette Pick: </label>
+            <input type="color" id="paintColor" value="#00ffcc" style="vertical-align:middle; cursor:pointer;"><br><br>
+            <button id="toolDraw" class="tool-btn" style="background:#00ffcc;" onclick="setTool('draw')">Paint</button>
+            <button id="toolErase" class="tool-btn" style="background:#555; color:white;" onclick="setTool('erase')">Eraser</button>
         </div>
 
-        <p>Estimated Cost: <strong>$<span id="blockCost">0.00</span></strong></p>
+        <div style="margin-bottom:10px;">
+            <label style="font-size:12px; display:block; margin-bottom:4px;">Target Redirect URL:</label>
+            <input type="url" id="adTargetUrl" placeholder="https://yourwebsite.com" style="width:90%; background:#222; border:1px solid #444; color:white; padding:4px; font-family:monospace; border-radius:3px;">
+        </div>
+
+        <p style="font-size:13px; margin:5px 0;">Size Requirement: <strong>10x10 Block (100 Pixels)</strong></p>
+        <p style="font-size:13px;">Estimated Cost: <strong style="color:#00ffcc;">$<span id="blockCost">0.00</span></strong></p>
         
-        <button onclick="generatePayload()">1. Generate Design Code</button>
+        <button onclick="generatePayload()">1. Generate Ad Design</button>
         
-        <textarea id="payloadBox" readonly placeholder="Your art code will appear here..." style="width:90%; height:50px; background:#222; color:#fff; border:1px solid #333; font-family:monospace; font-size:10px; margin-top:5px; display:none; resize:none;"></textarea>
+        <textarea id="payloadBox" readonly placeholder="Your art code will appear here..." style="width:94%; height:50px; background:#222; color:#fff; border:1px solid #333; font-family:monospace; font-size:10px; margin-top:8px; display:none; resize:none; padding:5px; border-radius:4px;"></textarea>
         
-        <button id="buyBtn" style="display:none;" onclick="processPayment()">2. Purchase Space</button>
+        <button id="buyBtn" style="display:none; background:#ffea00; color:black;" onclick="processPayment()">2. Purchase Space</button>
         <button style="background:#ff0055; color:white; margin-top:5px;" onclick="cancelSelection()">Cancel</button>
     </div>
 
     <footer>
-        Built with AI assistance. Tested and operated by and for humans. Released under the Unlicense.
+        Built with AI assistance. Tested and operated by and for humans. Released under the Unlicense.<br>
+        <span style="color:#a51d24; font-weight:bold;">TERMS OF SERVICE: Any submission containing explicit content, malicious software redirects, or systemic platform abuse will result in an immediate site ban and permanent asset revocation without recourse or monetary refund.</span>
     </footer>
 
     <canvas id="gridCanvas"></canvas>
@@ -102,7 +142,6 @@
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Updated to your new 20k boundaries
         const GRID_WIDTH = 20000;
         const GRID_HEIGHT = 20000;
 
@@ -112,10 +151,8 @@
         let isDragging = false;
         let startX, startY;
 
-        // TRACKING SIMULATED SALES FOR S-CURVE
         let totalPixelsSold = 25000000; 
 
-        // S-CURVE LOGISTIC MATH CONFIGURATION
         const MAX_PRICE = 10.00;     
         const STEEPNESS = 0.0000001; 
         const MIDPOINT = 50000000;   
@@ -125,47 +162,80 @@
             return Math.max(0.01, price); 
         }
 
-        // Existing data structures
+        // DATABASE AD STRUCTURE (Each block has individual design matrix and clickable hyperlinks)
         const soldBlocks = [
-            { x: 9950, y: 9950, w: 100, h: 100, color: '#ff0055' },
-            { x: 10100, y: 9900, w: 120, h: 60, color: '#00ffcc' }
+            { 
+                x: 9950, y: 9950, w: 10, h: 10, 
+                url: 'https://github.com',
+                grid: Array(10).fill().map(() => Array(10).fill('#ff0055')) // Flat backup color example matrix
+            }
         ];
 
         let selection = null;
 
-        // PIXEL EDITOR LAYOUT CONSTANTS
+        // UPDATED TO CRITICAL 10X10 REQUIREMENT MINIMUMS
         const editorCanvas = document.getElementById('pixelEditorCanvas');
         const eCtx = editorCanvas.getContext('2d');
-        const EDITOR_SIZE = 16; // Fixes block scale to 16x16 pixel layout areas
-        const PIXEL_SCALE = 10; 
-        let editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#00ffcc'));
+        const EDITOR_SIZE = 10; 
+        const PIXEL_SCALE = 16; // Scales up to fit canvas space geometry correctly (10 * 16 = 160)
+        
+        let editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#111111'));
+        let isPainting = false;
+        let currentTool = 'draw'; 
+
+        function setTool(tool) {
+            currentTool = tool;
+            if (tool === 'draw') {
+                document.getElementById('toolDraw').style.background = '#00ffcc';
+                document.getElementById('toolDraw').style.color = 'black';
+                document.getElementById('toolErase').style.background = '#555';
+                document.getElementById('toolErase').style.color = 'white';
+            } else {
+                document.getElementById('toolErase').style.background = '#ff0055';
+                document.getElementById('toolErase').style.color = 'white';
+                document.getElementById('toolDraw').style.background = '#555';
+                document.getElementById('toolDraw').style.color = 'white';
+            }
+        }
 
         function drawEditor() {
             eCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
             for (let y = 0; y < EDITOR_SIZE; y++) {
                 for (let x = 0; x < EDITOR_SIZE; x++) {
                     eCtx.fillStyle = editorGrid[y][x];
-                    eCtx.fillRect(x * PIXEL_SCALE, y * PIXEL_SCALE, PIXEL_SCALE - 1, PIXEL_SCALE - 1);
+                    eCtx.fillRect(x * PIXEL_SCALE, y * PIXEL_SCALE, PIXEL_SCALE, PIXEL_SCALE);
                 }
+            }
+
+            eCtx.strokeStyle = '#252525';
+            eCtx.lineWidth = 0.5;
+            for (let i = 0; i <= EDITOR_SIZE; i++) {
+                eCtx.beginPath(); eCtx.moveTo(i * PIXEL_SCALE, 0); eCtx.lineTo(i * PIXEL_SCALE, editorCanvas.height); eCtx.stroke();
+                eCtx.beginPath(); eCtx.moveTo(0, i * PIXEL_SCALE); eCtx.lineTo(editorCanvas.width, i * PIXEL_SCALE); eCtx.stroke();
             }
         }
 
-        editorCanvas.addEventListener('mousedown', (e) => {
+        function paintPixel(e) {
             const rect = editorCanvas.getBoundingClientRect();
             const clickX = Math.floor((e.clientX - rect.left) / PIXEL_SCALE);
             const clickY = Math.floor((e.clientY - rect.top) / PIXEL_SCALE);
-            const activeColor = document.getElementById('paintColor').value;
             
             if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
-                editorGrid[clickY][clickX] = activeColor;
+                editorGrid[clickY][clickX] = (currentTool === 'draw') ? document.getElementById('paintColor').value : '#111111';
                 drawEditor();
             }
-        });
+        }
+
+        editorCanvas.addEventListener('mousedown', (e) => { isPainting = true; paintPixel(e); });
+        editorCanvas.addEventListener('mousemove', (e) => { if (isPainting) paintPixel(e); });
+        window.addEventListener('mouseup', () => { isPainting = false; });
+
+        function recenterCamera() {
+            cameraX = GRID_WIDTH / 2; cameraY = GRID_HEIGHT / 2; zoom = 1; draw();
+        }
 
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            draw();
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight; draw();
         }
 
         function draw() {
@@ -177,22 +247,36 @@
             document.getElementById('curPrice').innerText = currentUnitPrice.toFixed(4);
             document.getElementById('totalSold').innerText = totalPixelsSold.toLocaleString();
 
-            // Draw boundaries
+            // Map Bounds Outline
             ctx.strokeStyle = '#333';
             ctx.lineWidth = Math.max(1, 2 * zoom);
             const rectX = centerX + (0 - cameraX) * zoom;
             const rectY = centerY + (0 - cameraY) * zoom;
             ctx.strokeRect(rectX, rectY, GRID_WIDTH * zoom, GRID_HEIGHT * zoom);
 
-            // Render sold blocks
+            // Detailed Render Engine for Sold Blocks (Renders full matrix designs)
             soldBlocks.forEach(block => {
-                const screenX = centerX + (block.x - cameraX) * zoom;
-                const screenY = centerY + (block.y - cameraY) * zoom;
-                ctx.fillStyle = block.color;
-                ctx.fillRect(screenX, screenY, block.w * zoom, block.h * zoom);
+                const startScreenX = centerX + (block.x - cameraX) * zoom;
+                const startScreenY = centerY + (block.y - cameraY) * zoom;
+                
+                // Render internal layout matrix architecture
+                if (block.grid) {
+                    const cellW = zoom; 
+                    const cellH = zoom;
+                    for (let y = 0; y < block.h; y++) {
+                        for (let x = 0; x < block.w; x++) {
+                            ctx.fillStyle = block.grid[y][x];
+                            ctx.fillRect(startScreenX + (x * zoom), startScreenY + (y * zoom), cellW + 0.5, cellH + 0.5);
+                        }
+                    }
+                } else {
+                    // Fail-safe flat boundary fill
+                    ctx.fillStyle = block.color || '#ff0055';
+                    ctx.fillRect(startScreenX, startScreenY, block.w * zoom, block.h * zoom);
+                }
             });
 
-            // Render selection box
+            // Snapped Target Grid Box Overlay
             if (selection) {
                 const screenX = centerX + (selection.x - cameraX) * zoom;
                 const screenY = centerY + (selection.y - cameraY) * zoom;
@@ -200,12 +284,17 @@
                 ctx.lineWidth = 2;
                 ctx.strokeRect(screenX, screenY, selection.w * zoom, selection.h * zoom);
             }
+
+            // Crosshair
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(centerX - 10, centerY); ctx.lineTo(centerX + 10, centerY); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(centerX, centerY - 10); ctx.lineTo(centerX, centerY + 10); ctx.stroke();
         }
 
         canvas.addEventListener('mousemove', (e) => {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            
             const gridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
             const gridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
 
@@ -219,8 +308,7 @@
                 cameraY -= (e.clientY - startY) / zoom;
                 cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
                 cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
-                startX = e.clientX;
-                startY = e.clientY;
+                startX = e.clientX; startY = e.clientY;
                 draw();
             }
         });
@@ -233,7 +321,7 @@
 
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // Click grid to lock selection area and show drawing matrix tools
+        // Click Handler (Direct Selection Snaps AND Ad Redirect Actions)
         canvas.addEventListener('click', (e) => {
             if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) return; 
             
@@ -242,29 +330,55 @@
             const clickGridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
             const clickGridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
 
-            selection = { x: clickGridX - 8, y: clickGridY - 8, w: 16, h: 16 };
-            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#00ffcc'));
+            if (clickGridX < 0 || clickGridX >= GRID_WIDTH || clickGridY < 0 || clickGridY >= GRID_HEIGHT) return;
+
+            // 1. Check if user clicked an active sold ad unit block
+            for (let block of soldBlocks) {
+                if (clickGridX >= block.x && clickGridX < block.x + block.w &&
+                    clickGridY >= block.y && clickGridY < block.y + block.h) {
+                    if (block.url) {
+                        window.open(block.url, '_blank'); // Instant redirect target link open!
+                        return;
+                    }
+                }
+            }
+
+            // 2. Otherwise snap selection array to the nearest base multiple of 10
+            const snappedX = Math.floor(clickGridX / 10) * 10;
+            const snappedY = Math.floor(clickGridY / 10) * 10;
+
+            selection = { x: snappedX, y: snappedY, w: 10, h: 10 };
+            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#111111'));
+            document.getElementById('adTargetUrl').value = '';
             
-            const totalPixels = selection.w * selection.h;
+            const totalPixels = selection.w * selection.h; // Exactly 100 pixels
             const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
 
-            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | 16x16 Block`;
+            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | 100-Pixel Ad Unit`;
             document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
             document.getElementById('editor-panel').style.display = 'block';
             
             document.getElementById('payloadBox').style.display = 'none';
             document.getElementById('buyBtn').style.display = 'none';
             
+            setTool('draw');
             drawEditor();
             draw();
         });
 
         function generatePayload() {
+            const urlValue = document.getElementById('adTargetUrl').value.trim();
+            if(!urlValue) {
+                alert("Please enter a valid target URL layout link for your advertisement redirect asset location.");
+                return;
+            }
+
             const payload = {
                 x: selection.x,
                 y: selection.y,
                 w: selection.w,
                 h: selection.h,
+                url: urlValue,
                 grid: editorGrid
             };
             
@@ -275,7 +389,7 @@
             pBox.select(); 
             
             document.getElementById('buyBtn').style.display = 'block';
-            alert("Artwork design code generated! Copy the text in the box below before clicking buy.");
+            alert("Design code generated! Copy the text block below before proceeding.");
         }
 
         function cancelSelection() {
@@ -285,41 +399,30 @@
         }
 
         function processPayment() {
-            alert("To buy space: Head to my Ko-fi/Stripe link and include your coordinate data tag payload in the reference details note field!");
+            alert("To complete purchase: Head to checkout, process your amount, and paste your generated text string configuration explicitly inside your transaction confirmation comment notes.");
         }
 
-        // Click grid to lock selection area and show drawing matrix tools
-        canvas.addEventListener('click', (e) => {
-            if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) return; 
-            
+        // Map Zooming Engine Mechanics
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const clickGridX = Math.floor(cameraX + (e.clientX - centerX) / zoom);
-            const clickGridY = Math.floor(cameraY + (e.clientY - centerY) / zoom);
+            const gridMouseX = cameraX + (mouseX - centerX) / zoom;
+            const gridMouseY = cameraY + (mouseY - centerY) / zoom;
 
-            // Out of bounds safety check
-            if (clickGridX < 0 || clickGridX >= GRID_WIDTH || clickGridY < 0 || clickGridY >= GRID_HEIGHT) return;
+            zoom = (e.deltaY < 0) ? Math.min(20, zoom * 1.1) : Math.max(0.05, zoom / 1.1);
 
-            // NEW SNAPPING LOGIC: Snap the upper-left corner to the nearest multiple of 16
-            const snappedX = Math.floor(clickGridX / 16) * 16;
-            const snappedY = Math.floor(clickGridY / 16) * 16;
+            cameraX = gridMouseX - (mouseX - centerX) / zoom;
+            cameraY = gridMouseY - (mouseY - centerY) / zoom;
+            cameraX = Math.max(0, Math.min(GRID_WIDTH, cameraX));
+            cameraY = Math.max(0, Math.min(GRID_HEIGHT, cameraY));
 
-            selection = { x: snappedX, y: snappedY, w: 16, h: 16 };
-            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#00ffcc'));
-            
-            const totalPixels = selection.w * selection.h;
-            const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
-
-            document.getElementById('selectionDetails').innerText = `Loc: (${selection.x}, ${selection.y}) | 16x16 Block`;
-            document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
-            document.getElementById('editor-panel').style.display = 'block';
-            
-            document.getElementById('payloadBox').style.display = 'none';
-            document.getElementById('buyBtn').style.display = 'none';
-            
-            drawEditor();
             draw();
-        });
+        }, { passive: false });
 
         window.addEventListener('resize', resize);
         resize();
