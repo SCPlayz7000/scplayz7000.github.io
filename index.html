@@ -221,7 +221,19 @@
             const clickY = Math.floor((e.clientY - rect.top) / PIXEL_SCALE);
             
             if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
-                editorGrid[clickY][clickX] = (currentTool === 'draw') ? document.getElementById('paintColor').value : '#111111';
+                if (currentTool === 'draw') {
+                    const activeColor = document.getElementById('paintColor').value;
+                    
+                    // QUICK TOGGLE: If they click the exact same color again, erase it!
+                    if (editorGrid[clickY][clickX] === activeColor) {
+                        editorGrid[clickY][clickX] = '#111111';
+                    } else {
+                        editorGrid[clickY][clickX] = activeColor;
+                    }
+                } else {
+                    // ERASER MODE: Force-clear back to empty space theme color
+                    editorGrid[clickY][clickX] = '#111111';
+                }
                 drawEditor();
             }
         }
