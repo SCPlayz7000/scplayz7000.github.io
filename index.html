@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon-Grid Matrix // Vaporwave Horizon</title>
+    <title>Cyber Matrix Portal // Million Dollar Asset Ledger</title>
     <style>
         body {
             margin: 0;
@@ -16,12 +16,13 @@
         
         #info, #editor-panel, #controls-panel {
             position: absolute;
-            background: rgba(19, 3, 36, 0.92); /* Translucent Synth Dark */
+            background: rgba(19, 3, 36, 0.95); /* Translucent Synth Dark */
             padding: 15px;
             border-radius: 8px;
             border: 2px solid #00f0ff; /* Electric Cyan Neon Border */
             box-shadow: 0 0 15px #00f0ff, inset 0 0 10px rgba(0, 240, 255, 0.3);
             text-shadow: 0 0 5px #ff007f;
+            z-index: 10;
         }
         
         #info {
@@ -40,11 +41,13 @@
             top: 10px;
             right: 10px;
             display: none;
-            width: 260px;
+            width: 300px;
             color: #00f0ff; /* Light up editor texts in Cyan */
             text-shadow: 0 0 5px #00f0ff;
             border-color: #ff007f; /* Magenta border for action matrix */
             box-shadow: 0 0 15px #ff007f;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         h2, h3 {
@@ -95,6 +98,7 @@
             pointer-events: none;
             line-height: 1.4;
             text-shadow: 0 0 2px rgba(255, 0, 127, 0.4);
+            z-index: 5;
         }
         
         .tool-btn {
@@ -116,26 +120,33 @@
             box-shadow: 0 0 8px rgba(255, 251, 0, 0.2);
         }
 
-        input[type="url"] {
-            width: 90%; 
+        .input-field {
+            width: 93%; 
             background: #11011a; 
             border: 1px solid #00f0ff; 
             color: #fff; 
-            padding: 5px; 
+            padding: 6px; 
             font-family: monospace; 
             border-radius: 3px;
             box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+            margin-bottom: 8px;
+        }
+
+        .form-section {
+            border-top: 1px dashed #ff007f;
+            margin-top: 12px;
+            padding-top: 12px;
         }
     </style>
 </head>
 <body>
 
     <div id="info">
-        <h2>Cyber Grid //</h2>
-        <p style="color:#fff;">PAN: DRAG MOUSE | ZOOM: SCROLL</p>
+        <h2>Cyber Grid Matrix //</h2>
+        <p style="color:#fff; margin: 4px 0;">PAN: DRAG MOUSE | ZOOM: SCROLL</p>
         <hr style="border-color:#ff007f">
-        <p>VECTOR X: <span id="hoverX" style="color:#fff">0</span> | Y: <span id="hoverY" style="color:#fff">0</span></p>
-        <p>UNITS ALLOCATED: <span id="totalSold" style="color:#fff">0</span> / 400M</p>
+        <p style="margin: 6px 0;">VECTOR X: <span id="hoverX" style="color:#fff">0</span> | Y: <span id="hoverY" style="color:#fff">0</span></p>
+        <p style="margin: 6px 0;">UNITS ALLOCATED: <span id="totalSold" style="color:#fff">0</span> / 400M</p>
         <div class="rate-badge">
             SYS EXCH RATE:<br>
             1 PIXEL = $<span id="curPrice">0.01</span>
@@ -144,7 +155,12 @@
 
     <div id="controls-panel">
         <h3 style="margin:0 0 10px 0; font-size:13px; color:#00f0ff; text-shadow:0 0 4px #00f0ff;">SYS UTILS</h3>
-        <button onclick="recenterCamera()" style="margin:0; background:#2c053d; color:#00f0ff; border-color:#00f0ff; box-shadow:0 0 5px #00f0ff;">Recenter View</button>
+        <label style="font-size: 11px; color: #fff;">ALLOCATION MODE:</label>
+        <select id="allocationMode" class="input-field" style="width: 100%; margin-top: 4px;" onchange="cancelSelection()">
+            <option value="pixel">Single Pixel (1x1)</option>
+            <option value="block" selected>Standard Block (10x10)</option>
+        </select>
+        <button onclick="recenterCamera()" style="margin-top:10px; background:#2c053d; color:#00f0ff; border-color:#00f0ff; box-shadow:0 0 5px #00f0ff;">Recenter View</button>
     </div>
 
     <div id="editor-panel">
@@ -160,20 +176,33 @@
             <button id="toolErase" class="tool-btn" style="background:#333; color:#fff; box-shadow:none;" onclick="setTool('erase')">Eraser</button>
         </div>
 
-        <div style="margin-bottom:10px;">
+        <div>
             <label style="font-size:11px; display:block; margin-bottom:4px; color:#ff007f; text-shadow:0 0 3px #ff007f;">REDIRECT GATEWAY (URL):</label>
-            <input type="url" id="adTargetUrl" placeholder="https://retro-space.wave">
+            <input type="url" id="adTargetUrl" class="input-field" placeholder="https://retro-space.wave">
         </div>
 
-        <p style="font-size:11px; margin:5px 0; color:#fff;">RESOLUTION: <strong>32x32 Matrix Mesh</strong></p>
-        <p style="font-size:11px; margin:5px 0; color:#fff;">BOUND MINIMUM: <strong>10x10 Block (100px)</strong></p>
+        <p style="font-size:11px; margin:5px 0; color:#fff;">RESOLUTION: <strong id="resDisplay">32x32 Mesh</strong></p>
         <p style="font-size:12px; margin:10px 0 5px 0;">COST: <strong style="color:#fffb00; text-shadow:0 0 5px #fffb00;">$<span id="blockCost">0.00</span></strong></p>
         
-        <button onclick="generatePayload()">1. Compile Matrix Data</button>
-        
-        <textarea id="payloadBox" readonly placeholder="DATA STREAM READY..." style="width:94%; height:50px; background:#11011a; color:#00f0ff; border:1px solid #ff007f; font-family:monospace; font-size:10px; margin-top:8px; display:none; resize:none; padding:5px; border-radius:4px; box-shadow:0 0 5px #ff007f;"></textarea>
-        
-        <button id="buyBtn" style="display:none; background:#fffb00; color:#000; box-shadow:0 0 10px #fffb00;" onclick="processPayment()">2. Initialize Gateway Buy</button>
+        <!-- DIRECT DEPOSIT & INVOICE FORM SECTION -->
+        <div class="form-section">
+            <h3 style="font-size: 12px; color: #ff007f; margin-bottom: 8px;">SETTLEMENT INVOICE</h3>
+            
+            <label style="font-size:10px; display:block; margin-bottom:2px;">OWNER EMAIL / IDENTITY:</label>
+            <input type="email" id="clientEmail" class="input-field" placeholder="operator@domain.com" required>
+            
+            <label style="font-size:10px; display:block; margin-bottom:2px;">DEPOSIT METHOD:</label>
+            <select id="paymentMethod" class="input-field" style="width: 100%;">
+                <option value="wire">Direct Bank Wire Transfer</option>
+                <option value="ach">ACH Direct Deposit</option>
+                <option value="crypto">Decentralized Token Network</option>
+            </select>
+            
+            <label style="font-size:10px; display:block; margin-bottom:2px;">PROCESSING INSTRUCTIONS:</label>
+            <textarea id="processingNotes" class="input-field" style="width:93%; height:45px; resize:none;" placeholder="Enter routing notes or asset ownership signature details..."></textarea>
+        </div>
+
+        <button onclick="submitInvoiceAllocation()">Submit Verification Invoice</button>
         <button style="background:#555; color:#fff; box-shadow:none; margin-top:5px;" onclick="cancelSelection()">Abort</button>
     </div>
 
@@ -218,13 +247,13 @@
 
         let selection = null;
 
-        // 32x32 PRODUCTION CONFIGURATION SYSTEM
+        // PRODUCTION CONFIGURATION STATE SYSTEM
         const editorCanvas = document.getElementById('pixelEditorCanvas');
         const eCtx = editorCanvas.getContext('2d');
-        const EDITOR_SIZE = 32; 
-        const PIXEL_SCALE = 5; // 32 * 5 = 160px dimensions
+        let editorSize = 32; 
+        let pixelScale = 5; 
         
-        let editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#130324'));
+        let editorGrid = Array(editorSize).fill().map(() => Array(editorSize).fill('#130324'));
         let isPainting = false;
         let currentTool = 'draw'; 
 
@@ -249,27 +278,27 @@
 
         function drawEditor() {
             eCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
-            for (let y = 0; y < EDITOR_SIZE; y++) {
-                for (let x = 0; x < EDITOR_SIZE; x++) {
+            for (let y = 0; y < editorSize; y++) {
+                for (let x = 0; x < editorSize; x++) {
                     eCtx.fillStyle = editorGrid[y][x];
-                    eCtx.fillRect(x * PIXEL_SCALE, y * PIXEL_SCALE, PIXEL_SCALE, PIXEL_SCALE);
+                    eCtx.fillRect(x * pixelScale, y * pixelScale, pixelScale, pixelScale);
                 }
             }
 
             eCtx.strokeStyle = '#20053b';
             eCtx.lineWidth = 0.5;
-            for (let i = 0; i <= EDITOR_SIZE; i++) {
-                eCtx.beginPath(); eCtx.moveTo(i * PIXEL_SCALE, 0); eCtx.lineTo(i * PIXEL_SCALE, editorCanvas.height); eCtx.stroke();
-                eCtx.beginPath(); eCtx.moveTo(0, i * PIXEL_SCALE); eCtx.lineTo(editorCanvas.width, i * PIXEL_SCALE); eCtx.stroke();
+            for (let i = 0; i <= editorSize; i++) {
+                eCtx.beginPath(); eCtx.moveTo(i * pixelScale, 0); eCtx.lineTo(i * pixelScale, editorCanvas.height); eCtx.stroke();
+                eCtx.beginPath(); eCtx.moveTo(0, i * pixelScale); eCtx.lineTo(editorCanvas.width, i * pixelScale); eCtx.stroke();
             }
         }
 
         function paintPixel(e) {
             const rect = editorCanvas.getBoundingClientRect();
-            const clickX = Math.floor((e.clientX - rect.left) / PIXEL_SCALE);
-            const clickY = Math.floor((e.clientY - rect.top) / PIXEL_SCALE);
+            const clickX = Math.floor((e.clientX - rect.left) / pixelScale);
+            const clickY = Math.floor((e.clientY - rect.top) / pixelScale);
             
-            if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
+            if (clickX >= 0 && clickX < editorSize && clickY >= 0 && clickY < editorSize) {
                 if (currentTool === 'draw') {
                     editorGrid[clickY][clickX] = document.getElementById('paintColor').value;
                 } else {
@@ -282,10 +311,10 @@
         editorCanvas.addEventListener('mousedown', (e) => { 
             isPainting = true; 
             const rect = editorCanvas.getBoundingClientRect();
-            const clickX = Math.floor((e.clientX - rect.left) / PIXEL_SCALE);
-            const clickY = Math.floor((e.clientY - rect.top) / PIXEL_SCALE);
+            const clickX = Math.floor((e.clientX - rect.left) / pixelScale);
+            const clickY = Math.floor((e.clientY - rect.top) / pixelScale);
             
-            if (clickX >= 0 && clickX < EDITOR_SIZE && clickY >= 0 && clickY < EDITOR_SIZE) {
+            if (clickX >= 0 && clickX < editorSize && clickY >= 0 && clickY < editorSize) {
                 if (editorGrid[clickY][clickX] !== '#130324' && currentTool === 'draw') {
                     editorGrid[clickY][clickX] = '#130324';
                     drawEditor();
@@ -322,18 +351,29 @@
             const rectX = centerX + (0 - cameraX) * zoom;
             const rectY = centerY + (0 - cameraY) * zoom;
             ctx.strokeRect(rectX, rectY, GRID_WIDTH * zoom, GRID_HEIGHT * zoom);
-            ctx.shadowBlur = 0; // Reset canvas bloom for performance
+            ctx.shadowBlur = 0;
 
-            // Render Engine for Custom Matrix Submissions
+            // Resolution-Independent Render Engine Loop
             soldBlocks.forEach(block => {
                 const startScreenX = centerX + (block.x - cameraX) * zoom;
                 const startScreenY = centerY + (block.y - cameraY) * zoom;
                 
-                if (block.grid) {
-                    for (let y = 0; y < block.h; y++) {
-                        for (let x = 0; x < block.w; x++) {
+                if (block.grid && Array.isArray(block.grid)) {
+                    const gridRows = block.grid.length;
+                    const gridCols = block.grid[0].length;
+                    
+                    const pixelW = (block.w * zoom) / gridCols;
+                    const pixelH = (block.h * zoom) / gridRows;
+
+                    for (let y = 0; y < gridRows; y++) {
+                        for (let x = 0; x < gridCols; x++) {
                             ctx.fillStyle = block.grid[y][x];
-                            ctx.fillRect(startScreenX + (x * zoom), startScreenY + (y * zoom), zoom + 0.5, zoom + 0.5);
+                            ctx.fillRect(
+                                startScreenX + (x * pixelW), 
+                                startScreenY + (y * pixelH), 
+                                Math.ceil(pixelW), 
+                                Math.ceil(pixelH)
+                            );
                         }
                     }
                 } else {
@@ -408,33 +448,47 @@
                 }
             }
 
-            // Snaps coordinate maps securely down to multiples of 10
-            const snappedX = Math.floor(clickGridX / 10) * 10;
-            const snappedY = Math.floor(clickGridY / 10) * 10;
+            // Evaluate Selection Allocation Mode Parameters
+            const mode = document.getElementById('allocationMode').value;
+            if (mode === 'pixel') {
+                selection = { x: clickGridX, y: clickGridY, w: 1, h: 1 };
+                editorSize = 1;
+                pixelScale = 160; // Fills canvas context entirely
+                document.getElementById('resDisplay').innerText = "1x1 Single Pixel Matrix";
+            } else {
+                const snappedX = Math.floor(clickGridX / 10) * 10;
+                const snappedY = Math.floor(clickGridY / 10) * 10;
+                selection = { x: snappedX, y: snappedY, w: 10, h: 10 };
+                editorSize = 32;
+                pixelScale = 5;
+                document.getElementById('resDisplay').innerText = "32x32 Block Mesh";
+            }
 
-            selection = { x: snappedX, y: snappedY, w: 10, h: 10 };
-            editorGrid = Array(EDITOR_SIZE).fill().map(() => Array(EDITOR_SIZE).fill('#130324'));
+            editorGrid = Array(editorSize).fill().map(() => Array(editorSize).fill('#130324'));
             document.getElementById('adTargetUrl').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('processingNotes').value = '';
             
             const totalPixels = selection.w * selection.h; 
             const estimatedCost = totalPixels * getPixelPrice(totalPixelsSold);
 
-            document.getElementById('selectionDetails').innerText = `NODE ADDR: (${selection.x}, ${selection.y}) // SEC SEC`;
+            document.getElementById('selectionDetails').innerText = `NODE ADDR: (${selection.x}, ${selection.y})`;
             document.getElementById('blockCost').innerText = estimatedCost.toFixed(2);
             document.getElementById('editor-panel').style.display = 'block';
-            
-            document.getElementById('payloadBox').style.display = 'none';
-            document.getElementById('buyBtn').style.display = 'none';
             
             setTool('draw');
             drawEditor();
             draw();
         });
 
-        function generatePayload() {
+        function submitInvoiceAllocation() {
             const urlValue = document.getElementById('adTargetUrl').value.trim();
-            if(!urlValue) {
-                alert("CRITICAL ERROR: A valid redirect gateway link string layout is required.");
+            const emailValue = document.getElementById('clientEmail').value.trim();
+            const method = document.getElementById('paymentMethod').value;
+            const notes = document.getElementById('processingNotes').value.trim();
+
+            if (!urlValue || !emailValue) {
+                alert("VALIDATION ERROR: Target URL and Client Contact Identity are both required fields.");
                 return;
             }
 
@@ -444,17 +498,33 @@
                 w: selection.w,
                 h: selection.h,
                 url: urlValue,
-                grid: editorGrid
+                grid: editorGrid,
+                clientIdentity: emailValue,
+                settlementType: method,
+                routingInstructions: notes,
+                timestamp: new Date().toISOString()
             };
             
             const encodedString = btoa(JSON.stringify(payload));
-            const pBox = document.getElementById('payloadBox');
-            pBox.value = encodedString;
-            pBox.style.display = 'block';
-            pBox.select(); 
             
-            document.getElementById('buyBtn').style.display = 'block';
-            alert("MATRIX COMPILED: Asset configuration payload generated below.");
+            // Log local test generation state to developer console
+            console.log("Invoice Bundle Compiled: ", payload);
+            console.log("Encoded Payload Asset: ", encodedString);
+
+            alert(`INVOICE TRANSMITTED SUCCESSFULLY\n\nMethod: ${method.toUpperCase()}\nAmount Due: $${document.getElementById('blockCost').innerText}\n\nPlease transfer processing notes and deposit settlement parameters to network operators.`);
+            
+            // Optimistic localized layout canvas update for interface tracking
+            soldBlocks.push({
+                x: selection.x,
+                y: selection.y,
+                w: selection.w,
+                h: selection.h,
+                url: urlValue,
+                grid: editorGrid
+            });
+
+            totalPixelsSold += (selection.w * selection.h);
+            cancelSelection();
         }
 
         function cancelSelection() {
@@ -463,11 +533,6 @@
             draw();
         }
 
-        function processPayment() {
-            alert("TRANSACTION GATEWAY OPEN: Process checkout amount and pass compiled configuration data array strings through processing transaction notes.");
-        }
-
-        // Global Zoom Tracker Setup
         window.addEventListener('wheel', (e) => {
             if (e.target !== canvas) return;
             
