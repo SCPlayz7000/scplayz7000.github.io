@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Block Grid Board // Infinite Workspace</title>
+    <title>Infinite Grid Workspace // Canvas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-        /* Custom scrollbar adjustments for premium aesthetics */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -29,244 +28,81 @@
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col antialiased">
 
-    <!-- View 1: Main Infinite Grid Dashboard -->
-    <div id="view-grid" class="view-route flex-1 flex flex-col w-full max-w-7xl mx-auto p-6">
-        <header class="flex justify-between items-center pb-6 border-b border-gray-200 mb-6">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Infinite Grid Workspace</h1>
-                <p class="text-sm text-gray-500 mt-1">SaaS Block Asset Board Console</p>
-            </div>
-            <a href="https://buymeacoffee.com/scplayz7000" target="_blank" class="bg-amber-400 hover:bg-amber-500 text-black font-semibold text-sm py-2.5 px-5 rounded-lg shadow-sm transition duration-200 flex items-center gap-2">
-                ☕ Buy Me a Coffee
-            </a>
-        </header>
+    <!-- Main Navigation Bar -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-4 flex justify-between items-center border-b border-gray-200 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-900">Infinite Grid Board</h1>
+            <p class="text-xs text-gray-500">SaaS Block Asset Board Console</p>
+        </div>
+        <a href="https://buymeacoffee.com/scplayz7000" target="_blank" class="bg-amber-400 hover:bg-amber-500 text-black font-semibold text-xs py-2 px-4 rounded-lg shadow-sm transition duration-200 flex items-center gap-1.5">
+            ☕ Buy Me a Coffee
+        </a>
+    </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 items-start">
-            <!-- Grid Canvas Control Center -->
-            <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <canvas id="gridCanvas" width="750" height="500" class="border border-gray-300 rounded-lg cursor-grab active:cursor-grabbing bg-gray-50 w-full h-auto aspect-[15/10]"></canvas>
-                <div class="flex justify-between text-xs text-gray-500 mt-3 font-medium px-1">
-                    <span>🖱️ Drag to Pan | Scroll Wheel to Zoom</span>
-                    <span>📍 Max Area: 10,000 × 10,000 Blocks</span>
-                </div>
-            </div>
-
-            <!-- Selection Sidebar Details -->
-            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-6">
-                <div class="space-y-2">
-                    <label class="text-xs font-bold uppercase tracking-wider text-gray-400">Current Node Focus</label>
-                    <div id="selectionStatus" class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border-l-4 border-blue-600 leading-relaxed font-medium">
-                        Click on any unallocated grid segment to initialize a secure node claim.
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="colorPicker" class="text-xs font-bold uppercase tracking-wider text-gray-400">Pre-select Allocation Color</label>
-                    <input type="color" id="colorPicker" value="#2563eb" class="w-full h-11 border border-gray-300 rounded-lg p-1 bg-transparent cursor-pointer">
-                </div>
-
-                <button id="checkoutBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-200 text-center tracking-wide block">
-                    Proceed to Checkout
-                </button>
+    <!-- Main Workspace Container -->
+    <main class="flex-1 w-full max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        <!-- Grid Viewport Box -->
+        <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <canvas id="gridCanvas" width="750" height="500" class="border border-gray-300 rounded-lg cursor-grab active:cursor-grabbing bg-gray-50 w-full h-auto aspect-[15/10]"></canvas>
+            <div class="flex justify-between text-[11px] text-gray-500 mt-3 font-medium px-1">
+                <span>🖱️ Drag to Pan | Scroll Wheel to Zoom</span>
+                <span>📍 Max Grid Space: 10,000 × 10,000 Blocks</span>
             </div>
         </div>
-    </div>
 
-    <!-- View 2: Isolated Checkout Interface -->
-    <div id="view-checkout" class="view-route hidden flex-1 w-full max-w-2xl mx-auto p-6" style="display:none;">
-        <header class="flex items-center gap-4 pb-6 border-b border-gray-200 mb-8">
-            <button onclick="navigateTo('#/')" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition">
-                ← Back to Workspace
-            </button>
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Secure Node Checkout</h1>
-                <p class="text-sm text-gray-500 mt-0.5">Initialize purchase for selected block</p>
-            </div>
-        </header>
-
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
-            <!-- Order Summary Details -->
-            <div class="bg-gray-50 rounded-lg border border-gray-200 p-5 space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-200 pb-2">Allocation Details</h3>
-                <div class="flex justify-between text-sm text-gray-700">
-                    <span>Virtual Coordinates:</span>
-                    <span id="checkoutCoords" class="font-semibold text-gray-900">X: -, Y: -</span>
-                </div>
-                <div class="flex justify-between items-center text-sm text-gray-700 border-t border-gray-200 pt-3">
-                    <span>Standard Unit Pricing:</span>
-                    <span class="text-lg font-bold text-emerald-600" id="checkoutPrice">$1.00</span>
-                </div>
-            </div>
-
-            <!-- Asset Type Switcher -->
-            <div class="space-y-3">
-                <label class="text-xs font-bold uppercase tracking-wider text-gray-400">Payload Config Type</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <button type="button" id="typeColor" class="py-3 px-4 border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold rounded-lg transition text-sm">
-                        Solid Block Color
-                    </button>
-                    <button type="button" id="typeImage" class="py-3 px-4 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-medium rounded-lg transition text-sm">
-                        Custom Matrix Image
-                    </button>
-                </div>
-            </div>
-
-            <!-- Image File Input Panel -->
-            <div id="checkoutImageGroup" class="hidden space-y-2">
-                <label for="imageUpload" class="text-xs font-bold uppercase tracking-wider text-gray-400">Upload Pixel Block Graphic</label>
-                <input type="file" id="imageUpload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-200 rounded-lg p-2 bg-gray-50">
-                <p class="text-[11px] text-gray-400">Recommended dimension: Square ratio. File will auto-scale into the 16x16 pixel board space.</p>
-            </div>
-
-            <!-- Buyer Identity Credentials -->
+        <!-- Utility/Control Sidebar -->
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-6">
             <div class="space-y-2">
-                <label for="buyerName" class="text-xs font-bold uppercase tracking-wider text-gray-400">Your Operator Alias / Brand Handle</label>
-                <input type="text" id="buyerName" placeholder="e.g., scplayz" class="w-full h-11 border border-gray-300 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            </div>
-
-            <div class="text-xs text-gray-500 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg leading-relaxed">
-                🚀 Clicking confirmation claims the node block locally on your browser. To verify, keep, and sync your claimed node onto the global public ledger securely, proceed with the checkout donation matching your invoice.
-            </div>
-
-            <div class="flex gap-4 pt-4">
-                <button onclick="navigateTo('#/')" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition text-sm">
-                    Abort Checkout
-                </button>
-                <button id="confirmPurchaseBtn" class="flex-[2] py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg shadow-md transition text-sm">
-                    Purchase via Buy Me a Coffee
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- View 3: Isolated Admin Control Dashboard -->
-    <div id="view-admin" class="view-route hidden flex-1 w-full max-w-4xl mx-auto p-6" style="display:none;">
-        <header class="flex items-center justify-between pb-6 border-b border-gray-200 mb-8">
-            <div class="flex items-center gap-4">
-                <button onclick="navigateTo('#/')" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition">
-                    ← Grid
-                </button>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Admin Control Console</h1>
-                    <p class="text-sm text-gray-500 mt-0.5">Moderate grid structures & allocation packets</p>
+                <label class="text-xs font-bold uppercase tracking-wider text-gray-400">Current Block Focus</label>
+                <div id="selectionStatus" class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border-l-4 border-blue-600 leading-relaxed font-medium">
+                    Click on an unallocated grid segment to initialize a block claim.
                 </div>
             </div>
-            <button onclick="clearAdminSession()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
-                Logout Session
-            </button>
-        </header>
 
-        <!-- Admin Authentication Form -->
-        <div id="adminAuthSection" class="max-w-md mx-auto bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
-            <div class="text-center space-y-2">
-                <h2 class="text-lg font-bold text-gray-900">Authorization Security Gateway</h2>
-                <p class="text-xs text-gray-500">Provide high-tier operator credentials to inspect logs</p>
-            </div>
-            <div class="space-y-2">
-                <label for="adminPasscode" class="text-xs font-bold uppercase tracking-wider text-gray-400">Security Passcode</label>
-                <input type="password" id="adminPasscode" placeholder="••••••••" class="w-full h-11 border border-gray-300 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            </div>
-            <button id="verifyAdminBtn" class="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg shadow-md transition text-sm">
-                Unlock Node Panel
+            <button id="checkoutBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition duration-200 text-center text-sm tracking-wide">
+                Proceed to Checkout
             </button>
         </div>
+    </main>
 
-        <!-- Admin Operator Console Panel -->
-        <div id="adminControlSection" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Allocated Nodes</span>
-                    <p class="text-2xl font-bold text-gray-900" id="statAllocated">0</p>
-                </div>
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Estimated Vault</span>
-                    <p class="text-2xl font-bold text-emerald-600" id="statVault">$0.00</p>
-                </div>
-                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Admin Clearance</span>
-                    <p class="text-2xl font-bold text-blue-600">Level 4 (Super)</p>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div class="p-5 border-b border-gray-200">
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">System Ledger Matrix Logs</h3>
-                </div>
-                <div id="adminLedgerList" class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-                    <!-- Dynamic Log Lists -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Toast Notifications Layer -->
+    <!-- Custom Toast Notification Container -->
     <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
-    <!-- Application Footer Actions -->
-    <footer class="mt-auto py-8 w-full max-w-7xl mx-auto px-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 gap-4">
-        <span>SaaS Block Grid System // All Rights Reserved 2026.</span>
-        <button onclick="navigateTo('#/admin')" class="text-gray-400 hover:text-blue-600 transition font-medium">
+    <!-- Layout Footer -->
+    <footer class="py-8 w-full max-w-7xl mx-auto px-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-400 gap-4 mt-auto">
+        <span>SaaS Block Grid Board // All Rights Reserved 2026.</span>
+        <a href="admin.html" class="text-gray-400 hover:text-blue-600 transition font-medium">
             🛡️ System Security Check // Admin Operator Login
-        </button>
+        </a>
     </footer>
 
     <script>
-        // DOM Node Handles
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('colorPicker');
         const selectionStatus = document.getElementById('selectionStatus');
         const checkoutBtn = document.getElementById('checkoutBtn');
 
-        // Router View elements
-        const viewRoutes = document.querySelectorAll('.view-route');
-
-        // Checkout View inputs
-        const checkoutCoords = document.getElementById('checkoutCoords');
-        const checkoutPrice = document.getElementById('checkoutPrice');
-        const typeColorBtn = document.getElementById('typeColor');
-        const typeImageBtn = document.getElementById('typeImage');
-        const checkoutImageGroup = document.getElementById('checkoutImageGroup');
-        const imageUploadInput = document.getElementById('imageUpload');
-        const buyerNameInput = document.getElementById('buyerName');
-        const confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
-
-        // Admin panel elements
-        const adminAuthSection = document.getElementById('adminAuthSection');
-        const adminControlSection = document.getElementById('adminControlSection');
-        const adminPasscodeInput = document.getElementById('adminPasscode');
-        const verifyAdminBtn = document.getElementById('verifyAdminBtn');
-        const adminLedgerList = document.getElementById('adminLedgerList');
-        const statAllocated = document.getElementById('statAllocated');
-        const statVault = document.getElementById('statVault');
-
-        // System Configuration Constants
+        // Coordinate Configuration Limits
         const VIRTUAL_COLS = 10000;
         const VIRTUAL_ROWS = 10000;
         const BLOCK_SIZE = 16; 
-        const BLOCK_PRICE = 1.00;
-        const ADMIN_PASSCODE = "scplayz_admin"; // Admin panel bypass gate
 
-        // In-memory grid registry syncing from LocalStorage (allowing cross-page simulation)
+        // Shared Image Canvas Cache
+        const imageCache = {};
+
+        // Local State Copy sync
         let purchasedBlocks = {};
         try {
             const rawData = localStorage.getItem('saas_grid_blocks');
             if (rawData) {
                 purchasedBlocks = JSON.parse(rawData);
-                // Hydrate stored image sources into canvas-compatible Image objects
-                Object.keys(purchasedBlocks).forEach(key => {
-                    if (purchasedBlocks[key].type === 'image' && purchasedBlocks[key].imageSrc) {
-                        const img = new Image();
-                        img.src = purchasedBlocks[key].imageSrc;
-                        purchasedBlocks[key].imgElement = img;
-                    }
-                });
             }
         } catch (e) {
-            console.error("Local storage allocation query issue", e);
+            console.error("Failure querying grid registry maps", e);
         }
 
-        // Camera States
+        // Camera Pan & Zoom States
         let camera = {
             x: (VIRTUAL_COLS * BLOCK_SIZE) / 2,
             y: (VIRTUAL_ROWS * BLOCK_SIZE) / 2,
@@ -279,15 +115,11 @@
         let cameraStart = { x: 0, y: 0 };
         let selectedBlock = null;
 
-        // Custom image upload binary tracking
-        let checkoutType = "color"; // 'color' | 'image'
-        let uploadedImageBase64 = null;
-
-        // Elegant Toast System (replaces typical browser alert)
+        // Custom Toast Notifications
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast p-4 rounded-lg shadow-lg text-sm font-semibold pointer-events-auto transform translate-y-5 opacity-0 transition-all duration-300 border-l-4`;
+            toast.className = `p-4 rounded-lg shadow-lg text-sm font-semibold pointer-events-auto transform translate-y-5 opacity-0 transition-all duration-300 border-l-4`;
             
             if (type === 'success') {
                 toast.className += ' bg-emerald-50 border-emerald-500 text-emerald-800';
@@ -300,7 +132,6 @@
             toast.innerHTML = message;
             container.appendChild(toast);
 
-            // Reflow repaint to trigger transition animations
             setTimeout(() => {
                 toast.classList.remove('translate-y-5', 'opacity-0');
             }, 50);
@@ -311,70 +142,10 @@
             }, 4000);
         }
 
-        // Router routing controller
-        function navigateTo(hash) {
-            window.location.hash = hash;
-            handleRouting();
-        }
-
-        function handleRouting() {
-            const hash = window.location.hash || '#/';
-            
-            // Hide all layout route views
-            viewRoutes.forEach(view => {
-                view.classList.add('hidden');
-                view.style.display = 'none';
-            });
-
-            if (hash.startsWith('#/checkout')) {
-                // Prepare separate checkout view parameters
-                if (!selectedBlock) {
-                    showToast("No active coordinates specified. Directing to grid panel.", "error");
-                    navigateTo('#/');
-                    return;
-                }
-                
-                checkoutCoords.innerText = `X: ${selectedBlock.col}, Y: ${selectedBlock.row}`;
-                checkoutPrice.innerText = `$${BLOCK_PRICE.toFixed(2)}`;
-                buyerNameInput.value = '';
-                imageUploadInput.value = '';
-                uploadedImageBase64 = null;
-                resetCheckoutType();
-
-                const targetView = document.getElementById('view-checkout');
-                targetView.classList.remove('hidden');
-                targetView.style.display = 'block';
-            } else if (hash.startsWith('#/admin')) {
-                // Initialize Admin operator check
-                const targetView = document.getElementById('view-admin');
-                targetView.classList.remove('hidden');
-                targetView.style.display = 'block';
-                checkAdminSession();
-            } else {
-                // Main Grid view loader
-                const targetView = document.getElementById('view-grid');
-                targetView.classList.remove('hidden');
-                targetView.style.display = 'block';
-                
-                // Adjust responsive sizing
-                resizeCanvas();
-                drawGrid();
-            }
-        }
-
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientWidth * (500 / 750); // Keep ratio scaling
-        }
-
-        // Main Virtual Coordinate System Rendering Engine
+        // Rendering Engine Loop
         function drawGrid() {
-            if (window.location.hash.startsWith('#/checkout') || window.location.hash.startsWith('#/admin')) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Frame bounds math
             const leftWorldX = (0 - canvas.width / 2) / camera.zoom + camera.x;
             const rightWorldX = (canvas.width - canvas.width / 2) / camera.zoom + camera.x;
             const topWorldY = (0 - canvas.height / 2) / camera.zoom + camera.y;
@@ -394,11 +165,17 @@
 
                     if (purchasedBlocks[key]) {
                         const block = purchasedBlocks[key];
-                        if (block.type === 'image' && block.imgElement) {
-                            if (block.imgElement.complete) {
-                                ctx.drawImage(block.imgElement, screenX, screenY, size, size);
+                        if (block.image) {
+                            // Check local cache, draw cached Image reference
+                            if (!imageCache[key]) {
+                                imageCache[key] = new Image();
+                                imageCache[key].src = block.image;
+                                imageCache[key].onload = () => drawGrid();
+                            }
+                            if (imageCache[key].complete) {
+                                ctx.drawImage(imageCache[key], screenX, screenY, size, size);
                             } else {
-                                ctx.fillStyle = '#e5e7eb';
+                                ctx.fillStyle = block.color || '#e5e7eb';
                                 ctx.fillRect(screenX, screenY, size, size);
                             }
                         } else {
@@ -442,7 +219,15 @@
             };
         }
 
-        // UI Action and Input Gestures
+        // Window Resizing Tracking
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientWidth * (500 / 750);
+            drawGrid();
+        }
+
+        // Viewport Drag/Scroll Bindings
         canvas.addEventListener('mousedown', (e) => {
             isDragging = true;
             hasMoved = false;
@@ -463,8 +248,6 @@
 
             camera.x = cameraStart.x - dx / camera.zoom;
             camera.y = cameraStart.y - dy / camera.zoom;
-            
-            // Restrict camera coordinate bounds safely
             camera.x = Math.max(0, Math.min(VIRTUAL_COLS * BLOCK_SIZE, camera.x));
             camera.y = Math.max(0, Math.min(VIRTUAL_ROWS * BLOCK_SIZE, camera.y));
 
@@ -480,11 +263,11 @@
                     selectedBlock = coords;
                     const key = `${coords.col}_${coords.row}`;
                     
-                    let statusText = `<strong>Block Space Allocation:</strong><br>Coordinate: Col ${coords.col}, Row ${coords.row}<br>`;
+                    let statusText = `<strong>Coordinate Node Focus:</strong><br>Location: Col ${coords.col}, Row ${coords.row}<br>`;
                     if (purchasedBlocks[key]) {
                         statusText += `Status: <span class="text-rose-600 font-bold">Claimed by ${purchasedBlocks[key].owner}</span>`;
                     } else {
-                        statusText += `Status: <span class="text-emerald-600 font-bold">Unallocated ($${BLOCK_PRICE.toFixed(2)})</span>`;
+                        statusText += `Status: <span class="text-emerald-600 font-bold">Unallocated ($1.00)</span>`;
                     }
                     
                     selectionStatus.innerHTML = statusText;
@@ -504,219 +287,26 @@
             drawGrid();
         }, { passive: false });
 
-        // Transition to Checkout Action View
+        // Navigate to Checkout View Page
         checkoutBtn.addEventListener('click', () => {
             if (!selectedBlock) {
-                showToast("Initialize checkout sequence by selecting a coordinate node.", "error");
+                showToast("Select an unallocated block coordinate grid point to begin.", "error");
                 return;
             }
 
             const key = `${selectedBlock.col}_${selectedBlock.row}`;
             if (purchasedBlocks[key]) {
-                showToast("Conflict error: Selected block space is already occupied.", "error");
+                showToast("This block coordinate space is already occupied.", "error");
                 return;
             }
 
-            navigateTo('#/checkout');
+            // Save checkout selection state context locally, then travel
+            localStorage.setItem('saas_selected_block', JSON.stringify(selectedBlock));
+            window.location.href = 'checkout.html';
         });
 
-        // Checkout Asset Type Configurations
-        typeColorBtn.addEventListener('click', () => {
-            checkoutType = "color";
-            typeColorBtn.className = "py-3 px-4 border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold rounded-lg transition text-sm";
-            typeImageBtn.className = "py-3 px-4 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-medium rounded-lg transition text-sm";
-            checkoutImageGroup.classList.add('hidden');
-        });
-
-        typeImageBtn.addEventListener('click', () => {
-            checkoutType = "image";
-            typeImageBtn.className = "py-3 px-4 border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold rounded-lg transition text-sm";
-            typeColorBtn.className = "py-3 px-4 border-2 border-gray-200 hover:border-gray-300 text-gray-600 font-medium rounded-lg transition text-sm";
-            checkoutImageGroup.classList.remove('hidden');
-        });
-
-        function resetCheckoutType() {
-            checkoutType = "color";
-            typeColorBtn.click();
-        }
-
-        imageUploadInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    uploadedImageBase64 = evt.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Checkout Commit Settlement Action
-        confirmPurchaseBtn.addEventListener('click', () => {
-            const alias = buyerNameInput.value.trim() || 'Anonymous';
-            const key = `${selectedBlock.col}_${selectedBlock.row}`;
-            const selectedColor = colorPicker.value;
-
-            if (checkoutType === 'image' && !uploadedImageBase64) {
-                showToast("Configuration error: Custom image payload upload required.", "error");
-                return;
-            }
-
-            // Build structural state allocation profile
-            const blockProfile = {
-                type: checkoutType,
-                owner: alias,
-                color: selectedColor,
-                timestamp: Date.now()
-            };
-
-            if (checkoutType === 'image') {
-                blockProfile.imageSrc = uploadedImageBase64;
-                const img = new Image();
-                img.src = uploadedImageBase64;
-                blockProfile.imgElement = img;
-            }
-
-            // Sync structural parameters and update database storage
-            purchasedBlocks[key] = blockProfile;
-            try {
-                // Clear circular reference dependencies prior to JSON serializing
-                const cleanSaveState = {};
-                Object.keys(purchasedBlocks).forEach(k => {
-                    cleanSaveState[k] = {
-                        type: purchasedBlocks[k].type,
-                        owner: purchasedBlocks[k].owner,
-                        color: purchasedBlocks[k].color,
-                        imageSrc: purchasedBlocks[k].imageSrc,
-                        timestamp: purchasedBlocks[k].timestamp
-                    };
-                });
-                localStorage.setItem('saas_grid_blocks', JSON.stringify(cleanSaveState));
-            } catch (err) {
-                showToast("System error: Unable to serialize layout state to memory.", "error");
-            }
-
-            showToast("Temporary allocation established locally. Transferring gateway...", "success");
-
-            // Redirect user straight to checkout settlement gateway link
-            setTimeout(() => {
-                window.open('https://buymeacoffee.com/scplayz7000', '_blank');
-                selectedBlock = null;
-                navigateTo('#/');
-            }, 1200);
-        });
-
-        // Admin Operator Panel Controls
-        function checkAdminSession() {
-            const isAuthed = sessionStorage.getItem('admin_authenticated') === 'true';
-            if (isAuthed) {
-                adminAuthSection.classList.add('hidden');
-                adminControlSection.classList.remove('hidden');
-                loadAdminLedger();
-            } else {
-                adminAuthSection.classList.remove('hidden');
-                adminControlSection.classList.add('hidden');
-            }
-        }
-
-        verifyAdminBtn.addEventListener('click', () => {
-            const enteredValue = adminPasscodeInput.value.trim();
-            if (enteredValue === ADMIN_PASSCODE) {
-                sessionStorage.setItem('admin_authenticated', 'true');
-                showToast("Access authorized. Session established safely.", "success");
-                checkAdminSession();
-            } else {
-                showToast("Verification failed: Security passcode invalid.", "error");
-            }
-        });
-
-        function clearAdminSession() {
-            sessionStorage.removeItem('admin_authenticated');
-            adminPasscodeInput.value = '';
-            showToast("Operator session safe-exit complete.", "info");
-            checkAdminSession();
-        }
-
-        // Render logs in the admin console
-        function loadAdminLedger() {
-            adminLedgerList.innerHTML = '';
-            const keys = Object.keys(purchasedBlocks);
-
-            statAllocated.innerText = keys.length.toLocaleString();
-            statVault.innerText = `$${(keys.length * BLOCK_PRICE).toFixed(2)}`;
-
-            if (keys.length === 0) {
-                adminLedgerList.innerHTML = `
-                    <div class="p-8 text-center text-sm text-gray-400 font-medium">
-                        No active workspace coordinates found in memory ledger logs.
-                    </div>
-                `;
-                return;
-            }
-
-            keys.forEach(key => {
-                const item = purchasedBlocks[key];
-                const blockRow = document.createElement('div');
-                blockRow.className = "p-4 flex items-center justify-between text-sm";
-
-                let thumbnailPreviewHtml = '';
-                if (item.type === 'image' && item.imageSrc) {
-                    thumbnailPreviewHtml = `<img src="${item.imageSrc}" class="w-8 h-8 rounded border border-gray-300 object-cover">`;
-                } else {
-                    thumbnailPreviewHtml = `<span class="w-8 h-8 rounded border border-gray-300 block" style="background-color: ${item.color || '#3b82f6'}"></span>`;
-                }
-
-                blockRow.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        ${thumbnailPreviewHtml}
-                        <div>
-                            <p class="font-bold text-gray-900">Node: [Col ${key.split('_')[0]}, Row ${key.split('_')[1]}]</p>
-                            <p class="text-xs text-gray-500 font-medium">Client Alias: ${item.owner} // Type: ${item.type.toUpperCase()}</p>
-                        </div>
-                    </div>
-                    <button onclick="adminRevokeBlock('${key}')" class="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition">
-                        Revoke Allocation
-                    </button>
-                `;
-
-                adminLedgerList.appendChild(blockRow);
-            });
-        }
-
-        window.adminRevokeBlock = function(key) {
-            delete purchasedBlocks[key];
-            try {
-                const cleanSaveState = {};
-                Object.keys(purchasedBlocks).forEach(k => {
-                    cleanSaveState[k] = {
-                        type: purchasedBlocks[k].type,
-                        owner: purchasedBlocks[k].owner,
-                        color: purchasedBlocks[k].color,
-                        imageSrc: purchasedBlocks[k].imageSrc,
-                        timestamp: purchasedBlocks[k].timestamp
-                    };
-                });
-                localStorage.setItem('saas_grid_blocks', JSON.stringify(cleanSaveState));
-            } catch (err) {
-                console.error("Ledger state synchronization error:", err);
-            }
-
-            showToast(`Operator authorization: Node [${key}] successfully wiped.`, "info");
-            loadAdminLedger();
-            drawGrid();
-        };
-
-        // Window resizing tracking listener
-        window.addEventListener('resize', () => {
-            resizeCanvas();
-            drawGrid();
-        });
-
-        // Initialize Router Core on load
-        window.addEventListener('hashchange', handleRouting);
-        
-        // Initial launch configuration execution
-        handleRouting();
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
     </script>
 </body>
 </html>
