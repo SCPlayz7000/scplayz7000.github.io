@@ -1,1 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard // Secure Registry Controls</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col antialiased">
 
+    <div class="flex-1 w-full max-w-4xl mx-auto p-6">
+        <header class="flex items-center justify-between pb-6 border-b border-gray-200 mb-8">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition">
+                    ← Grid
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Admin Controls Portal</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Moderate grid allocations & secure state checks</p>
+                </div>
+            </div>
+            <button onclick="clearAdminSession()" class="text-xs font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition">
+                Logout Session
+            </button>
+        </header>
+
+        <!-- Passcode Login Authorization Form -->
+        <div id="adminAuthSection" class="max-w-md mx-auto bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-lg font-bold text-gray-900">Operator Authorization Check</h2>
+                <p class="text-xs text-gray-500">Provide security clearance passcode to unlock parameters</p>
+            </div>
+            <div class="space-y-2">
+                <label for="adminPasscode" class="text-xs font-bold uppercase tracking-wider text-gray-400">Security Key</label>
+                <input type="password" id="adminPasscode" placeholder="••••••••" class="w-full h-11 border border-gray-300 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <button id="verifyAdminBtn" class="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg shadow-md transition text-sm">
+                Unlock Panel
+            </button>
+        </div>
+
+        <!-- System Management Dashboard Panel -->
+        <div id="adminControlSection" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Allocated Nodes</span>
+                    <p class="text-2xl font-bold text-gray-900" id="statAllocated">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Estimated Vault</span>
+                    <p class="text-2xl font-bold text-emerald-600" id="statVault">$0.00</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-400">Admin Clearance</span>
+                    <p class="text-2xl font-bold text-blue-600">Level 4 (Super)</p>
+                </div>
+            </div>
+
+            <!-- Manual payload decoder mapping -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">Supporter Payload Deployer</h3>
+                    <p class="text-xs text-gray-500 mt-1">Paste Base64 payload receipts copied from payment logs to permanently paint blocks onto the board.</p>
+                </div>
+                <div class="flex gap-3">
+                    <input type="text" id="payloadImportInput" placeholder="Paste Base64 payload here..." class="flex-1 h-11 border border-gray-300 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono">
+                    <button onclick="deployImportedPayload()" class="px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition">Authorize & Deploy</button>
+                </div>
+            </div>
+
+            <!-- Ledger Database Records List -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-gray-200">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400">System Ledger Matrix Logs</h3>
+                </div>
+                <div id="adminLedgerList" class="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
+                    <!-- Loaded dynamically in JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notifications Layer -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        const adminAuthSection = document.getElementById('adminAuthSection');
+        const adminControlSection = document.getElementById('adminControlSection');
+        const adminPasscodeInput = document.getElementById('adminPasscode');
+        const verifyAdminBtn = document.getElementById('verifyAdminBtn');
+        const adminLedgerList = document.getElementById('adminLedgerList');
+        const statAllocated = document.getElementById('statAllocated');
+        const statVault = document.getElementById('statVault');
+        const payloadImportInput = document.getElementById('payloadImportInput');
+
+        const BLOCK_PRICE = 1.00;
+
+        // Reversed Base64 representation of "ColorfulComrade3595"
+        const OBFUSCATED_PASSSIGNATURE = "NTk1M2VkYXJtb0NsdWZyb2xvQw==";
+
+        let purchasedBlocks = {};
+        try {
+            const rawData = localStorage.getItem('saas_grid_blocks');
+            if (rawData) {
+                purchasedBlocks = JSON.parse(rawData);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+
+        // Custom Toast Notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg text-sm font-semibold pointer-events-auto transform translate-y-5 opacity-0 transition-all duration-300 border-l-4`;
+            
+            if (type === 'success') {
+                toast.className += ' bg-emerald-50 border-emerald-500 text-emerald-800';
+            } else if (type === 'error') {
+                toast.className += ' bg-rose-50 border-rose-500 text-rose-800';
+            } else {
+                toast.className += ' bg-blue-50 border-blue-500 text-blue-800';
+            }
+
+            toast.innerHTML = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-5', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 4000);
+        }
+
+        function getSecureAdminKey() {
+            try {
+                return atob(OBFUSCATED_PASSSIGNATURE).split("").reverse().join("");
+            } catch (e) {
+                return "";
+            }
+        }
+
+        function checkAdminSession() {
+            const isAuthed = sessionStorage.getItem('admin_authenticated') === 'true';
+            if (isAuthed) {
+                adminAuthSection.classList.add('hidden');
+                adminControlSection.classList.remove('hidden');
+                loadAdminLedger();
+            } else {
+                adminAuthSection.classList.remove('hidden');
+                adminControlSection.classList.add('hidden');
+            }
+        }
+
+        verifyAdminBtn.addEventListener('click', () => {
+            const enteredValue = adminPasscodeInput.value.trim();
+            const actualPasscode = getSecureAdminKey();
+
+            if (enteredValue === actualPasscode) {
+                sessionStorage.setItem('admin_authenticated', 'true');
+                showToast("Identity verified. Admin privileges authorized.", "success");
+                checkAdminSession();
+            } else {
+                showToast("Access Denied: Invalid security passcode key.", "error");
+            }
+        });
+
+        window.clearAdminSession = function() {
+            sessionStorage.removeItem('admin_authenticated');
+            adminPasscodeInput.value = '';
+            showToast("Session security wipe complete.", "info");
+            checkAdminSession();
+        }
+
+        // Decode Base64 allocation payload receipt
+        window.deployImportedPayload = function() {
+            const rawPayload = payloadImportInput.value.trim();
+            if (!rawPayload) {
+                showToast("Paste a Supporter payload to validate.", "error");
+                return;
+            }
+
+            try {
+                const transaction = JSON.parse(atob(rawPayload));
+                
+                if (transaction.c === undefined || transaction.r === undefined || !transaction.color || !transaction.owner) {
+                    showToast("Failed mapping packet structure parameters.", "error");
+                    return;
+                }
+
+                const key = `${transaction.c}_${transaction.r}`;
+                if (purchasedBlocks[key]) {
+                    showToast("Coordinate point is already allocated.", "error");
+                    return;
+                }
+
+                purchasedBlocks[key] = {
+                    color: transaction.color,
+                    image: transaction.image || null,
+                    owner: transaction.owner,
+                    timestamp: transaction.t || Date.now()
+                };
+
+                localStorage.setItem('saas_grid_blocks', JSON.stringify(purchasedBlocks));
+                payloadImportInput.value = '';
+                showToast(`Success: Node [Col ${transaction.c}, Row ${transaction.r}] deployed!`, "success");
+                
+                loadAdminLedger();
+            } catch (e) {
+                showToast("Error decoding payload packet.", "error");
+            }
+        }
+
+        function loadAdminLedger() {
+            adminLedgerList.innerHTML = '';
+            const keys = Object.keys(purchasedBlocks);
+
+            statAllocated.innerText = keys.length.toLocaleString();
+            statVault.innerText = `$${(keys.length * BLOCK_PRICE).toFixed(2)}`;
+
+            if (keys.length === 0) {
+                adminLedgerList.innerHTML = `
+                    <div class="p-8 text-center text-sm text-gray-400 font-medium">
+                        No active canvas allocations found inside memory databases.
+                    </div>
+                `;
+                return;
+            }
+
+            keys.forEach(key => {
+                const item = purchasedBlocks[key];
+                const blockRow = document.createElement('div');
+                blockRow.className = "p-4 flex items-center justify-between text-sm hover:bg-gray-50 transition";
+
+                let thumbnailHtml = `<span class="w-8 h-8 rounded border border-gray-300 block" style="background-color: ${item.color || '#3b82f6'}"></span>`;
+                if (item.image) {
+                    thumbnailHtml = `<img src="${item.image}" class="w-8 h-8 rounded border border-gray-300 object-cover">`;
+                }
+
+                blockRow.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        ${thumbnailHtml}
+                        <div>
+                            <p class="font-bold text-gray-900">Node Coordinate: [Col ${key.split('_')[0]}, Row ${key.split('_')[1]}]</p>
+                            <p class="text-xs text-gray-500 font-medium">Claim Operator: ${item.owner}</p>
+                        </div>
+                    </div>
+                    <button onclick="adminRevokeBlock('${key}')" class="text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition">
+                        Revoke Slot
+                    </button>
+                `;
+
+                adminLedgerList.appendChild(blockRow);
+            });
+        }
+
+        window.adminRevokeBlock = function(key) {
+            delete purchasedBlocks[key];
+            try {
+                localStorage.setItem('saas_grid_blocks', JSON.stringify(purchasedBlocks));
+            } catch (err) {
+                console.error(err);
+            }
+
+            showToast(`Revocation update sent safely: Slot [${key}] wiped.`, "info");
+            loadAdminLedger();
+        };
+
+        checkAdminSession();
+    </script>
+</body>
+</html>
