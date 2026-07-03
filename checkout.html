@@ -1,1 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout // Square Block Purchase Gateway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col antialiased">
 
+    <div class="flex-1 w-full max-w-2xl mx-auto p-6 flex flex-col justify-center">
+        <header class="flex items-center gap-4 pb-6 border-b border-gray-200 mb-8">
+            <a href="index.html" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500 transition">
+                ← Return to Workspace
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Secure Node Checkout</h1>
+                <p class="text-sm text-gray-500 mt-0.5">Configure and construct block payment packet</p>
+            </div>
+        </header>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 space-y-6">
+            <!-- Order Parameters -->
+            <div class="bg-gray-50 rounded-lg border border-gray-200 p-5 space-y-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-200 pb-2">Selected Location</h3>
+                <div class="flex justify-between text-sm text-gray-700">
+                    <span>Virtual Coordinate Point:</span>
+                    <span id="checkoutCoords" class="font-semibold text-gray-900">Col -, Row -</span>
+                </div>
+                <div class="flex justify-between items-center text-sm text-gray-700 border-t border-gray-200 pt-3">
+                    <span>Unit Standard Pricing:</span>
+                    <span class="text-lg font-bold text-emerald-600">$1.00</span>
+                </div>
+            </div>
+
+            <!-- Block Filling Logic Preferences -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label for="colorPicker" class="text-xs font-bold uppercase tracking-wider text-gray-400">Select Fill Color</label>
+                    <input type="color" id="colorPicker" value="#2563eb" class="w-full h-11 border border-gray-300 rounded-lg p-1 bg-transparent cursor-pointer">
+                </div>
+                <div class="space-y-2">
+                    <label for="imageUpload" class="text-xs font-bold uppercase tracking-wider text-gray-400">Or Upload Image (Single Pixel / Small PNG)</label>
+                    <input type="file" id="imageUpload" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Operator Name handle input -->
+            <div class="space-y-2">
+                <label for="buyerName" class="text-xs font-bold uppercase tracking-wider text-gray-400">Your Operator Alias / Brand Handle</label>
+                <input type="text" id="buyerName" placeholder="e.g., scplayz" class="w-full h-11 border border-gray-300 rounded-lg px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+
+            <!-- Transaction Code Payload Block -->
+            <div class="space-y-3 border-t border-gray-100 pt-4">
+                <label class="text-xs font-bold uppercase tracking-wider text-gray-400 flex justify-between items-center">
+                    <span>Generated Supporter payload</span>
+                    <span class="text-[10px] text-blue-600 font-semibold normal-case">Required for manual deploy</span>
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="transactionPayloadBox" readonly class="flex-1 h-11 bg-gray-50 border border-gray-300 rounded-lg px-3 focus:outline-none text-xs font-mono text-gray-500" value="Provide Operator Alias first...">
+                    <button id="copyPayloadBtn" class="px-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg text-xs transition">Copy Code</button>
+                </div>
+                <p class="text-[10px] text-gray-400">This base64 string contains coordinate specifications, selected color, and branding credentials. Paste this message during payment checkout.</p>
+            </div>
+
+            <div class="text-xs text-gray-500 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg leading-relaxed space-y-1">
+                <p class="font-bold text-amber-900">⚠️ Anti-Spoofing Checkpoint:</p>
+                <p>Copy the code bundle above, click purchase checkout, and <strong>paste this string directly into your Buy Me a Coffee donation message</strong>.</p>
+                <p>The administrator will manually decode the code packet inside your payment receipt to paint the live workspace globally.</p>
+            </div>
+
+            <div class="flex gap-4 pt-2">
+                <a href="index.html" class="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition text-center text-sm">
+                    Abort Checkout
+                </a>
+                <button id="confirmPurchaseBtn" class="flex-[2] py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-lg shadow-md transition text-sm flex justify-center items-center gap-2">
+                    Pay via Buy Me a Coffee
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notifications Layer -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        const checkoutCoords = document.getElementById('checkoutCoords');
+        const buyerNameInput = document.getElementById('buyerName');
+        const colorPicker = document.getElementById('colorPicker');
+        const imageUpload = document.getElementById('imageUpload');
+        const transactionPayloadBox = document.getElementById('transactionPayloadBox');
+        const copyPayloadBtn = document.getElementById('copyPayloadBtn');
+        const confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
+
+        // Fetch selected coordinate data safely
+        let selectedBlock = null;
+        try {
+            const rawSelection = localStorage.getItem('saas_selected_block');
+            if (rawSelection) {
+                selectedBlock = JSON.parse(rawSelection);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+
+        if (!selectedBlock) {
+            alert("No block selected! Navigating back to main canvas.");
+            window.location.href = 'index.html';
+        }
+
+        checkoutCoords.innerText = `Col ${selectedBlock.col}, Row ${selectedBlock.row}`;
+
+        let base64Image = null;
+
+        // Custom Toast Notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg text-sm font-semibold pointer-events-auto transform translate-y-5 opacity-0 transition-all duration-300 border-l-4`;
+            
+            if (type === 'success') {
+                toast.className += ' bg-emerald-50 border-emerald-500 text-emerald-800';
+            } else if (type === 'error') {
+                toast.className += ' bg-rose-50 border-rose-500 text-rose-800';
+            } else {
+                toast.className += ' bg-blue-50 border-blue-500 text-blue-800';
+            }
+
+            toast.innerHTML = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-5', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 4000);
+        }
+
+        // Image file uploader handling
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                base64Image = null;
+                updatePayload();
+                return;
+            }
+
+            if (file.size > 50000) { // Limit size to 50KB to keep strings copyable
+                showToast("File is too large! Please upload a tiny PNG/JPG (under 50KB) to ensure code remains copyable.", "error");
+                imageUpload.value = '';
+                base64Image = null;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                base64Image = event.target.result;
+                updatePayload();
+                showToast("Image loaded successfully!", "success");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Generate Transaction Packet payload
+        function updatePayload() {
+            const alias = buyerNameInput.value.trim();
+            if (!alias) {
+                transactionPayloadBox.value = "Provide Operator Alias first...";
+                return;
+            }
+
+            const payloadObject = {
+                c: selectedBlock.col,
+                r: selectedBlock.row,
+                color: colorPicker.value,
+                image: base64Image,
+                owner: alias,
+                t: Date.now()
+            };
+
+            try {
+                const secureString = btoa(JSON.stringify(payloadObject));
+                transactionPayloadBox.value = secureString;
+            } catch (err) {
+                console.error(err);
+                transactionPayloadBox.value = "Error compiling payload.";
+            }
+        }
+
+        buyerNameInput.addEventListener('input', updatePayload);
+        colorPicker.addEventListener('change', updatePayload);
+
+        // Copy string helper
+        copyPayloadBtn.addEventListener('click', () => {
+            const payload = transactionPayloadBox.value;
+            if (payload.startsWith("Provide")) {
+                showToast("Write your handle/alias details before copying.", "error");
+                return;
+            }
+
+            navigator.clipboard.writeText(payload)
+                .then(() => showToast("Supporter checkout code copied to clipboard!", "success"))
+                .catch(() => showToast("Unable to copy. Copy manually.", "error"));
+        });
+
+        // Confirm redirect sequence
+        confirmPurchaseBtn.addEventListener('click', () => {
+            const payload = transactionPayloadBox.value;
+            if (payload.startsWith("Provide")) {
+                showToast("Incomplete details. Complete fields to checkout.", "error");
+                return;
+            }
+
+            showToast("Redirecting checkout requests to Buy Me a Coffee...", "success");
+
+            setTimeout(() => {
+                window.open('https://buymeacoffee.com/scplayz7000', '_blank');
+                localStorage.removeItem('saas_selected_block');
+                window.location.href = 'index.html';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
