@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Grid Board</title>
+    <title>Infinite Block Grid Board</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -19,7 +19,7 @@
 
         header {
             width: 100%;
-            max-width: 800px;
+            max-width: 1200px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -54,12 +54,15 @@
         .container {
             display: flex;
             gap: 24px;
-            max-width: 800px;
+            max-width: 1200px;
             width: 100%;
             flex-wrap: wrap;
+            align-items: flex-start;
         }
 
-        .canvas-container {
+        .canvas-wrapper {
+            flex: 2;
+            min-width: 300px;
             background-color: #ffffff;
             padding: 12px;
             border-radius: 8px;
@@ -70,13 +73,26 @@
         canvas {
             border: 1px solid #d1d5db;
             display: block;
-            cursor: pointer;
-            background-color: #ffffff;
+            cursor: grab;
+            background-color: #fafafa;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .nav-instructions {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .controls {
             flex: 1;
             min-width: 260px;
+            max-width: 350px;
             background-color: #ffffff;
             padding: 24px;
             border-radius: 8px;
@@ -85,6 +101,8 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            position: sticky;
+            top: 24px;
         }
 
         .control-group {
@@ -148,8 +166,13 @@
     </header>
 
     <div class="container">
-        <div class="canvas-container">
-            <canvas id="gridCanvas" width="512" height="512"></canvas>
+        <div class="canvas-wrapper">
+            <!-- Fixed viewport dimension, drawing an infinite space inside -->
+            <canvas id="gridCanvas" width="750" height="550"></canvas>
+            <div class="nav-instructions">
+                <span>Drag Mouse to Pan | Scroll Wheel to Zoom</span>
+                <span>Grid Capacity: 10,000 × 10,000 Blocks</span>
+            </div>
         </div>
 
         <div class="controls">
@@ -160,7 +183,7 @@
 
             <div class="control-group">
                 <label>Selection Details</label>
-                <div id="selectionStatus" class="status">Click anywhere on the grid to select a square block.</div>
+                <div id="selectionStatus" class="status">Click or drag to explore. Click a block to select.</div>
             </div>
 
             <button id="purchaseBtn" class="btn-purchase">Purchase Block</button>
@@ -174,59 +197,152 @@
         const selectionStatus = document.getElementById('selectionStatus');
         const purchaseBtn = document.getElementById('purchaseBtn');
 
+        // Virtual Map Limits
+        const VIRTUAL_COLS = 10000;
+        const VIRTUAL_ROWS = 10000;
         const BLOCK_SIZE = 16; 
-        const COLS = canvas.width / BLOCK_SIZE;
-        const ROWS = canvas.height / BLOCK_SIZE;
 
-        const purchasedBlocks = {};
+        // Camera State (Spawn dead-center of the 10k world map)
+        let camera = {
+            x: (VIRTUAL_COLS * BLOCK_SIZE) / 2,
+            y: (VIRTUAL_ROWS * BLOCK_SIZE) / 2,
+            zoom: 1.0
+        };
+
+        // Interaction State Tracking
+        let isDragging = false;
+        let hasMoved = false;
+        let dragStart = { x: 0, y: 0 };
+        let cameraStart = { x: 0, y: 0 };
+        
+        const purchasedBlocks = {}; 
         let selectedBlock = null;
 
         function drawGrid() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Render grid structure and filled blocks
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
+            // Compute visible range boundaries based on current pan & zoom
+            const leftWorldX = (0 - canvas.width / 2) / camera.zoom + camera.x;
+            const rightWorldX = (canvas.width - canvas.width / 2) / camera.zoom + camera.x;
+            const topWorldY = (0 - canvas.height / 2) / camera.zoom + camera.y;
+            const bottomWorldY = (canvas.height - canvas.height / 2) / camera.zoom + camera.y;
+
+            const startCol = Math.max(0, Math.floor(leftWorldX / BLOCK_SIZE));
+            const endCol = Math.min(VIRTUAL_COLS - 1, Math.floor(rightWorldX / BLOCK_SIZE));
+            const startRow = Math.max(0, Math.floor(topWorldY / BLOCK_SIZE));
+            const endRow = Math.min(VIRTUAL_ROWS - 1, Math.floor(bottomWorldY / BLOCK_SIZE));
+
+            // Only loop over and render elements on-screen
+            for (let r = startRow; r <= endRow; r++) {
+                for (let c = startCol; c <= endCol; c++) {
                     const key = `${c}_${r}`;
+                    
+                    // Transform Virtual Space positions to absolute DOM Screen coordinates
+                    const screenX = (c * BLOCK_SIZE - camera.x) * camera.zoom + canvas.width / 2;
+                    const screenY = (r * BLOCK_SIZE - camera.y) * camera.zoom + canvas.height / 2;
+                    const size = BLOCK_SIZE * camera.zoom;
+
                     if (purchasedBlocks[key]) {
                         ctx.fillStyle = purchasedBlocks[key];
-                        ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-                    } else {
-                        // Clean, minimal gray border lines
+                        ctx.fillRect(screenX, screenY, size, size);
+                    } else if (camera.zoom > 0.3) { 
+                        // Performance micro-optimization: Skip grid borders if zoomed way out
                         ctx.strokeStyle = '#e5e7eb';
                         ctx.lineWidth = 0.5;
-                        ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                        ctx.strokeRect(screenX, screenY, size, size);
                     }
                 }
             }
 
-            // High-contrast selection outline
+            // Highlight selected block element if it falls within view
             if (selectedBlock) {
+                const screenX = (selectedBlock.col * BLOCK_SIZE - camera.x) * camera.zoom + canvas.width / 2;
+                const screenY = (selectedBlock.row * BLOCK_SIZE - camera.y) * camera.zoom + canvas.height / 2;
+                const size = BLOCK_SIZE * camera.zoom;
+
                 ctx.strokeStyle = '#111827';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(selectedBlock.col * BLOCK_SIZE, selectedBlock.row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                ctx.lineWidth = Math.max(1.5, 2 * camera.zoom);
+                ctx.strokeRect(screenX, screenY, size, size);
             }
         }
 
-        canvas.addEventListener('click', (e) => {
+        // Convert DOM Client space back to internal Map Coordinates
+        function screenToWorld(screenX, screenY) {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const canvasX = screenX - rect.left;
+            const canvasY = screenY - rect.top;
 
-            const col = Math.floor(mouseX / BLOCK_SIZE);
-            const row = Math.floor(mouseY / BLOCK_SIZE);
+            const worldX = (canvasX - canvas.width / 2) / camera.zoom + camera.x;
+            const worldY = (canvasY - canvas.height / 2) / camera.zoom + camera.y;
 
-            if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
-                selectedBlock = { col, row };
-                
-                const key = `${col}_${row}`;
-                const statusText = `<strong>Block:</strong> Col ${col}, Row ${row}<br><strong>Status:</strong> ${purchasedBlocks[key] ? 'Owned' : 'Available'}`;
-                selectionStatus.innerHTML = statusText;
-                
-                drawGrid();
+            return {
+                col: Math.floor(worldX / BLOCK_SIZE),
+                row: Math.floor(worldY / BLOCK_SIZE)
+            };
+        }
+
+        // Pan Handling Inputs
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            dragStart.x = e.clientX;
+            dragStart.y = e.clientY;
+            cameraStart.x = camera.x;
+            cameraStart.y = camera.y;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+
+            // Simple deadzone logic to verify intentional pan actions
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                hasMoved = true;
+            }
+
+            camera.x = cameraStart.x - dx / camera.zoom;
+            camera.y = cameraStart.y - dy / camera.zoom;
+
+            // Restrict camera to virtual environment bounds
+            camera.x = Math.max(0, Math.min(VIRTUAL_COLS * BLOCK_SIZE, camera.x));
+            camera.y = Math.max(0, Math.min(VIRTUAL_ROWS * BLOCK_SIZE, camera.y));
+
+            drawGrid();
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            isDragging = false;
+            
+            // If the user dragged, it's a map shift. If not, treat as selection click.
+            if (!hasMoved) {
+                const coords = screenToWorld(e.clientX, e.clientY);
+
+                if (coords.col >= 0 && coords.col < VIRTUAL_COLS && coords.row >= 0 && coords.row < VIRTUAL_ROWS) {
+                    selectedBlock = coords;
+                    const key = `${coords.col}_${coords.row}`;
+                    selectionStatus.innerHTML = `<strong>Block:</strong> X:${coords.col}, Y:${coords.row}<br><strong>Status:</strong> ${purchasedBlocks[key] ? 'Owned' : 'Available'}`;
+                    drawGrid();
+                }
             }
         });
 
+        // Zoom Handling
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = 1.15;
+            
+            if (e.deltaY < 0) {
+                camera.zoom = Math.min(4.0, camera.zoom * zoomFactor); // Cap max zoom
+            } else {
+                camera.zoom = Math.max(0.15, camera.zoom / zoomFactor); // Cap min zoom
+            }
+            
+            drawGrid();
+        }, { passive: false });
+
+        // Purchase Updates Commit
         purchaseBtn.addEventListener('click', () => {
             if (!selectedBlock) {
                 alert('Please select a block on the grid first.');
@@ -234,16 +350,13 @@
             }
 
             const key = `${selectedBlock.col}_${selectedBlock.row}`;
-            const chosenColor = colorPicker.value;
-
-            purchasedBlocks[key] = chosenColor;
+            purchasedBlocks[key] = colorPicker.value;
             
-            selectionStatus.innerHTML = `<strong>Block:</strong> Col ${selectedBlock.col}, Row ${selectedBlock.row}<br><strong>Status:</strong> Owned`;
-            
+            selectionStatus.innerHTML = `<strong>Block:</strong> X:${selectedBlock.col}, Y:${selectedBlock.row}<br><strong>Status:</strong> Owned`;
             drawGrid();
-            console.log(`Saved block ${key} with color ${chosenColor}`);
         });
 
+        // Frame initialization
         drawGrid();
     </script>
 </body>
